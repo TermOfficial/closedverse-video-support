@@ -222,7 +222,7 @@ class User(models.Model):
 	def gravatar(self):
 		g = util.get_gravatar(self.email)
 		if not g:
-			return settings.STATIC_URL + '/img/anonymous-mii.png'
+			return settings.STATIC_URL + 'img/anonymous-mii.png'
 		return g
 	def mh(self):
 		origin_info = self.profile('origin_info')
@@ -356,9 +356,9 @@ class User(models.Model):
 			url = 'https://mii-secure.cdn.nintendo.net/{0}_{1}_face.png'.format(self.avatar, feeling)
 			return url
 		elif not self.avatar:
-			return settings.STATIC_URL + '/img/anonymous-mii.png'
+			return settings.STATIC_URL + 'img/anonymous-mii.png'
 		elif self.avatar == 's':
-			return settings.STATIC_URL + '/img/anonymous-mii-sad.png'
+			return settings.STATIC_URL + 'img/anonymous-mii-sad.png'
 		else:
 			return self.avatar
 
@@ -879,9 +879,9 @@ class Post(models.Model):
 		if request.user.is_authenticated:
 			#if UserBlock.find_block(self.creator, request.user):
 			#	return False
-			#return not self.is_mine(request.user)
+			return not self.is_mine(request.user)
 			# why did cedar-django do this? god knows
-			return True
+			#return True
 		else:
 			return False
 	def can_rm(self, request):
@@ -1093,8 +1093,8 @@ class Comment(models.Model):
 			return False
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
-			#return not self.is_mine(request.user)
-			return True
+			return not self.is_mine(request.user)
+			#return True
 		#if UserBlock.find_block(self.creator, request.user):
 		#	return False
 		else:
