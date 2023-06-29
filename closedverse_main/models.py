@@ -19,8 +19,10 @@ from django.urls import reverse
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 import re
+import random
 
 feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (69, 'easter egg'), )
+#feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (39, 'lol i lied'), (69, 'adam is gay'), (70, 'I am a faggot!'), (71, 'Juice'), (72, "Commit Suicide"), (73, "Fresh!"))
 post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'), (5, 'account pruge'))
 visibility = ((0, 'show'), (1, 'friends only'), (2, 'hide'), )
 
@@ -40,23 +42,23 @@ class UserManager(BaseUserManager):
 		user.save(using=self._db)
 		return user
 
-	def closed_create_user(self, username, password, email, addr, nick, nn, gravatar):
+	def closed_create_user(self, username, password, email, addr, signup_addr, user_agent, nick, nn, gravatar):
 		user = self.model(
 		username = username,
 		nickname = util.filterchars(nick),
 		addr = addr,
 		email = email,
 		)
-		if settings.CLOSEDVERSE_PROD:
-			if util.iphub(addr):
-				spamuser = True
-				if settings._DISALLOW_PROXY:
+		#if settings.CLOSEDVERSE_PROD:
+		#	if util.iphub(addr):
+		#		spamuser = True
+		#		if settings._DISALLOW_PROXY:
 					# This was for me, a server error will email admins of course.
-					raise ValueError
-			else:
-				spamuser = False
-		else:
-			spamuser = False
+		#			raise ValueError
+		#	else:
+		#		spamuser = False
+		#else:
+		#	spamuser = False
 		profile = Profile.objects.model()
 		if nn:
 			user.avatar = nn[0]
@@ -69,10 +71,10 @@ class UserManager(BaseUserManager):
 			user.has_mh = False
 		user.set_password(password)
 		user.save(using=self._db)
-		if spamuser:
-			profile.let_freedom = False
-		else:
-			profile.let_freedom = True
+		#if spamuser:
+		#	profile.let_freedom = False
+		#else:
+		#	profile.let_freedom = True
 		profile.user = user
 		profile.save()
 		return user
@@ -94,7 +96,7 @@ class UserManager(BaseUserManager):
 		if not user.exists():
 			return None
 		user = user.first()
-		# If the user is an admin, say that they don't exist
+		# If the user is an admin, say that they don't exist, actually no...
 		# Or, if the user doesn't want username login, don't let them if they didn't enter their email
 		if user.profile('email_login') == 2 and not user.email == username:
 			return None
@@ -107,8 +109,8 @@ class UserManager(BaseUserManager):
 			return (user, 2)
 		else:
 			if not passwd:
-				if user.can_manage():
-					return None
+				#if user.can_manage():
+				#	return None
 				return (user, False)
 		return (user, True)
 
@@ -118,7 +120,7 @@ class PostManager(models.Manager):
 
 class CommunityFavoriteManager(models.Manager):
 	def get_queryset(self):
-		return super(CommunityFavoriteManager, self).get_queryset().filter(community__is_rm=False).exclude(community__type=3)
+		return super(CommunityFavoriteManager, self).get_queryset().filter(community__is_rm=False).exclude(community__type=4)
 
 # Taken from https://github.com/jaredly/django-colorfield/blob/master/colorfield/fields.py
 color_re = re.compile('^#([A-Fa-f0-9]{6})$')
@@ -140,11 +142,17 @@ class User(models.Model):
 	email = models.EmailField(null=True, blank=True, default='')
 	has_mh = models.BooleanField(default=False)
 	avatar = models.CharField(max_length=1200, blank=True, default='')
+	theme = ColorField(blank=True, null=True)
 	# LEVEL: 0-1 is default, everything else is just levels
 	level = models.SmallIntegerField(default=0)
 	# ROLE: This doesn't have anything
 	role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'cool'), (7, 'urapp'), (8, 'owner'), (9, 'badgedes'), (10, 'jack'), (11, 'verified'),))
+	#role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'Bot'), (2, 'Administrator'), (3, 'Moderator'), (4, 'NO'), (5, 'Donator'), (6, 'Tester'), (7, 'Cools'), (8, 'Developer'), (9, 'SMF9-Django'), (10, 'Staff'), (11, 'GAY DOGWATER' ), ( 12, 'DUMB SNAIL' ), (13, 'Russian ADRIAN'), (14, 'Contest'), (15, 'Gamecon'), (16, 'Cedar'), ))
 	addr = models.CharField(max_length=64, null=True, blank=True)
+	signup_addr = models.CharField(max_length=64, null=True, blank=True)
+	user_agent = models.TextField(null=True, blank=True)
+	# C Tokens are things that let you make communities and shit.
+	c_tokens = models.IntegerField(default=1)
 	
 	# Things that don't have to do with auth lol
 	hide_online = models.BooleanField(default=False)
@@ -153,6 +161,9 @@ class User(models.Model):
 	staff = models.BooleanField(default=False)
 	#active = models.SmallIntegerField(default=1, choices=((0, 'Disabled'), (1, 'Good'), (2, 'Redirect')))
 	active = models.BooleanField(default=True)
+	warned = models.BooleanField(default=False)
+	warned_reason = models.CharField(blank=True, null=True, max_length=600)
+	bg_url = models.CharField(max_length=300, null=True, blank=True)
 	
 	is_anonymous = False
 	is_authenticated = True
@@ -167,6 +178,19 @@ class User(models.Model):
 	
 	def __str__(self):
 		return self.username
+	def ColorTheme(self):
+		# if the user set a theme, display that.
+		if self.theme:
+			the_theme = self.theme
+			the_theme = the_theme.strip("#")
+		# if there's no theme set by the user, use the site's picked theme.
+		elif settings.site_wide_theme_hex:
+			the_theme = settings.site_wide_theme_hex
+			the_theme = the_theme.strip("#")
+		# If there's no theme set in settings.py, return None.
+		else:
+			the_theme = None
+		return the_theme
 	def get_full_name(self):
 		return self.username
 	def get_short_name(self):
@@ -181,6 +205,10 @@ class User(models.Model):
 		return self.staff
 	def is_active(self):
 		return self.active
+	def is_warned(self):
+		return self.warned
+	def get_warned_reason(self):
+		return self.warned_reason
 	def set_password(self, raw_password):
 		self.password = bcrypt_sha256.using(rounds=13).hash(raw_password)
 	def check_password(self, raw_password):
@@ -256,6 +284,44 @@ class User(models.Model):
 			10: "stupid man",
 			11: "Verified",
 			}.get(self.role, '')
+			""" from cedar-django
+			first = {
+			1: 'tester',
+			2: 'administrator',
+			3: 'moderator',
+			4: 'openverse',
+			5: 'donator',
+			6: 'tester',
+			7: 'urapp',
+			8: 'developer',
+			9: 'pipinstalldjango',
+			10: 'staff',
+			11: 'kanna',
+			12: 'verified',
+			13: 'artcon',
+			14: 'contest',
+			15: 'gamecom',
+			16: 'mp',
+			}.get(self.role, '')
+			second = {
+			1: "Bot",
+			2: "Administrator",
+			3: "Moderator",
+			4: "No",
+			5: "Donator",
+			6: "Tester",
+			7: "Cool Dude",
+			8: "Wii U still best console.",
+			9: "Rixy Installed Django!",
+			10: "Staff",
+			11: "GAY DOGWATER ETC",
+			12: "THE STUPIDEST ROLE IN THE WORLD",
+			13: "A	D	R	I	A	N",
+			14: "Contest Winner",
+			15: "Game Contest Winner",
+			16: "Cedar Inc.",
+			}.get(self.role, '')
+			"""
 			if first:
 				first = 'official ' + first
 			return [first, second]
@@ -351,7 +417,7 @@ class User(models.Model):
 			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
 			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter().order_by('-created')[offset:offset + limit]
 		else:
-			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter().order_by('-created')[offset:offset + limit]
+			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter().order_by('-created').exclude(community__require_auth=True)[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
@@ -362,7 +428,7 @@ class User(models.Model):
 			has_yeah = Yeah.objects.filter(comment=OuterRef('id'), by=request.user.id)
 			posts = self.comment_set.select_related('original_post').select_related('creator').select_related('original_post__creator').annotate(num_yeahs=Count('yeah', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter().order_by('-created')[offset:offset + limit]
 		else:
-			posts = self.comment_set.select_related('original_post').select_related('original_post__creator').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True)).filter().order_by('-created')[offset:offset + limit]
+			posts = self.comment_set.select_related('original_post').select_related('original_post__creator').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True)).filter().order_by('-created').exclude(original_post__community__require_auth=True)[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
@@ -483,9 +549,9 @@ class User(models.Model):
 		return posts
 	def community_favorites(self, all=False):
 		if not all:
-			favorites = self.communityfavorite_set.order_by('-created')[:8]
+			favorites = self.communityfavorite_set.order_by('-created').filter(community__is_rm=False)[:8]
 		else:
-			favorites = self.communityfavorite_set.order_by('-created')
+			favorites = self.communityfavorite_set.order_by('-created').filter(community__is_rm=False)
 		communities = []
 		for fav in favorites:
 			communities.append(fav.community)
@@ -531,7 +597,12 @@ class User(models.Model):
 			'link': request.build_absolute_uri(reverse('main:forgot-passwd')) + "?token=" + base64.urlsafe_b64encode(bytes(self.password, 'utf-8')).decode(),
 		})
 		subj = 'Closedverse password reset for "{0}"'.format(self.username)
-		return send_mail(subject=subj, html_message=htmlmsg, from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL), recipient_list=[self.email], fail_silently=False)
+		return send_mail(
+		subject=subj, 
+		html_message=htmlmsg,
+		from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL),
+		recipient_list=[self.email],
+		fail_silently=False)
 	def find_related(self):
 		return User.objects.filter(id__in=LoginAttempt.objects.filter(Q(addr=self.addr), Q(user=self.id)).values_list('user', flat=True)).exclude(id=self.id)
 	@staticmethod
@@ -557,7 +628,7 @@ class User(models.Model):
 	@staticmethod
 	def get_from_passwd(passwd):
 		try:
-			user = User.objects.get(password=base64.urlsafe_b64decode(passwd))
+			user = User.objects.get(password=base64.urlsafe_b64decode(passwd).decode())
 		# Too lazy to make except cases
 		except:
 			return False
@@ -568,49 +639,62 @@ class Community(models.Model):
 	id = models.AutoField(primary_key=True)
 	name = models.CharField(max_length=255)
 	description = models.TextField(blank=True, default='')
-	ico = models.CharField(max_length=255, blank=True)
-	banner = models.CharField(max_length=255, blank=True)
+	ico = models.ImageField(upload_to='icon/%y/%m/%d/', max_length=100, blank=True, null=True)
+	banner = models.ImageField(upload_to='banner/%y/%m/%d/', max_length=100, blank=True, null=True)
 	# Type: 0 - general, 1 - game, 2 - special 
-	type = models.SmallIntegerField(default=0, choices=((0, 'general'), (1, 'game'), (2, 'special'), (3, 'hide')))
+	type = models.SmallIntegerField(default=0, choices=((0, 'General'), (1, 'Game'), (2, 'Special'), (3, 'User Community'), (4, 'Hide')))
 	# Platform - 0/none, 1/3DS, 2/Wii U, 3/both
-	platform = models.SmallIntegerField(default=0, choices=((0, 'none'), (1, '3ds'), (2, 'wii u'), (3, 'both')))
-	tags = models.CharField(blank=True, null=True, max_length=255, choices=(('announcements', 'main announcement community'), ('changelog', 'main changelog'), ('activity', 'Activity Feed posting community')))
+	platform = models.SmallIntegerField(default=0, choices=((0, 'none'), (1, '3ds'), (2, 'wii u'), (3, 'switch'), (4, 'both'), (5, 'PC'), (6, 'Xbox'), (7, 'Playstation')))
+	tags = models.CharField(blank=True, null=True, max_length=255, choices=(('announcements', 'main announcement community'), ('changelog', 'main changelog'), ('activity', 'Activity Feed posting community'), ('general', 'General Discussion Community')))
 	created = models.DateTimeField(auto_now_add=True)
 	updated = models.DateTimeField(auto_now=True)
 	is_rm = models.BooleanField(default=False)
 	is_feature = models.BooleanField(default=False)
+	require_auth = models.BooleanField(default=False)
 	allowed_users = models.TextField(null=True, blank=True)
 	creator = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
 
 	objects = PostManager()
 	real = models.Manager()
-
+	def popularity(self):
+		popularity = Post.objects.filter(community=self).count()
+		return popularity
 	def __str__(self):
 		return self.name
 	def icon(self):
-		if not self.ico:
-			return settings.STATIC_URL + "/img/title-icon-default.png"
-		return self.ico
+		if self.ico and hasattr(self.ico, 'url'):
+			return self.ico.url
+		else:
+			return settings.STATIC_URL + "img/title-icon-default.png"
 	def type_txt(self):
 		if self.type == 1:
 			return {
 			0: "",
 			1: "3DS Games",
 			2: "Wii U Games",
-			3: "Wii U Games\u30FB3DS Games",
+			3: "Switch Games",
+			4: "Wii U Games\u30FB3DS Games",
+			5: 'PC Games',
+			6: 'Xbox Games',
+			7: 'Playstation Games',
 			}.get(self.platform)
 		else:
 			return {
 			0: "General community",
 			1: "Game community",
 			2: "Special community",
+			3: "User owned community",
 			}.get(self.type)
 	def type_platform(self):
 		thing = {
 			0: "",
 			1: "3ds",
 			2: "wiiu",
-			3: "wiiu-3ds",
+			3: "switch",
+			4: "wiiu-3ds",
+			5: 'pc',
+			6: 'xbox',
+			7: 'ps',
 			}.get(self.platform)
 		if thing == "":
 			return None
@@ -618,13 +702,13 @@ class Community(models.Model):
 	def is_activity(self):
 		return self.tags == 'activity'
 	def clickable(self):
-		return not self.is_activity() and not self.type == 3
+		return not self.is_activity() and not self.type == 4
 	def get_posts(self, limit=50, offset=0, request=None, favorite=False):
 		if request.user.is_authenticated:
 			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
 			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		else:
-			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
+			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter(community_id=self.id).order_by('-created').exclude(community__require_auth=True)[offset:offset + limit]
 		if request:
 			for post in posts:
 				post.setup(request)
@@ -672,12 +756,14 @@ class Community(models.Model):
 				return 5
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
+		if not request.user.is_active():
+			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('_post_type') == 'painting'):
 			return 1
 		upload = None
 		drawing = None
 		video = None
-		body = request.POST['body']
+		body = request.POST.get('body')
 		if request.POST.get('_post_type') == 'painting':
 			body = 'drawing'
 		if request.FILES.get('screen'):
@@ -707,7 +793,7 @@ class Community(models.Model):
 		return new_post
 
 	def search(query='', limit=50, offset=0, request=None):
-		return Community.objects.filter(Q(name__icontains=query) | Q(description__contains=query)).exclude(type=3).order_by('-created')[offset:offset + limit]
+		return Community.objects.filter(Q(name__icontains=query) | Q(description__contains=query)).exclude(type=4).order_by('-created')[offset:offset + limit]
 
 	def get_all(type=0, offset=0, limit=12):
 		return Community.objects.filter(type=type).order_by('-created')[offset:offset + limit]
@@ -735,6 +821,7 @@ class Post(models.Model):
 	video = models.CharField(max_length=256, null=True, blank=True, default='')
 	url = models.URLField(max_length=1200, null=True, blank=True, default='')
 	spoils = models.BooleanField(default=False)
+	disable_yeah = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
 	befores = models.TextField(null=True, blank=True)
@@ -792,7 +879,9 @@ class Post(models.Model):
 		if request.user.is_authenticated:
 			#if UserBlock.find_block(self.creator, request.user):
 			#	return False
-			return not self.is_mine(request.user)
+			#return not self.is_mine(request.user)
+			# why did cedar-django do this? god knows
+			return True
 		else:
 			return False
 	def can_rm(self, request):
@@ -836,11 +925,11 @@ class Post(models.Model):
 				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)).filter(original_post=self).order_by('created')
 		else:
 			if limit:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created')[offset:offset + limit]
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)[offset:offset + limit]
 			elif offset:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created')[offset:]
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)[offset:]
 			else:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created')
+				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)
 		if request:
 			for post in comments:
 				post.setup(request)
@@ -857,6 +946,8 @@ class Post(models.Model):
 		elif not self.is_mine(request.user) and Comment.real.filter(creator=request.user, created__gt=timezone.now() - timedelta(seconds=10)).exists():
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
+			return 6
+		if not request.user.is_active():
 			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('_post_type') == 'painting'):
 			return 1
@@ -1002,7 +1093,8 @@ class Comment(models.Model):
 			return False
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
-			return not self.is_mine(request.user)
+			#return not self.is_mine(request.user)
+			return True
 		#if UserBlock.find_block(self.creator, request.user):
 		#	return False
 		else:
@@ -1087,6 +1179,7 @@ class Yeah(models.Model):
 		return a
 
 class Profile(models.Model):
+	is_new = models.BooleanField(default=True)
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -1096,10 +1189,16 @@ class Profile(models.Model):
 
 	comment = models.TextField(blank=True, default='')
 	country = models.CharField(max_length=120, blank=True, default='')
+	whatareyou = models.CharField(max_length=120, blank=True, default='')
 	#birthday = models.DateField(null=True, blank=True)
 	id_visibility = models.SmallIntegerField(default=0, choices=visibility)
+	
 	pronoun_is = models.IntegerField(default=0, choices=(
 	(0, "I don't know"), (1, "He/him"), (2, "She/her"), (3, "He/she"), (4, "They/them"), (5, "It")
+	))
+	
+	gender_is = models.IntegerField(default=0, choices=(
+	(0, "I don't know"), (1, "Girl"), (2, "Boy"), (3, "Minion"), (4, "Toaster"), (5, "Dinosaur"), (6, "Truck"), (7, "Robot"), (8, "Monkey"), (9, "Big chungus"), (10, "Other")
 	))
 
 	let_friendrequest = models.SmallIntegerField(default=0, choices=visibility)
@@ -1110,7 +1209,7 @@ class Profile(models.Model):
 	weblink = models.CharField(max_length=1200, blank=True, default='')
 	#gameskill = models.SmallIntegerField(default=0)
 	external = models.CharField(max_length=255, blank=True, default='')
-	favorite = models.ForeignKey(Post, blank=True, null=True, on_delete=models.CASCADE)
+	favorite = models.ForeignKey(Post, blank=True, null=True, on_delete=models.SET_NULL)
 
 	let_yeahnotifs = models.BooleanField(default=True)
 	let_freedom = models.BooleanField(default=True)
@@ -1562,10 +1661,18 @@ class LoginAttempt(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	success = models.BooleanField(default=False)
 	addr = models.CharField(max_length=64, null=True, blank=True)
+	user_agent = models.TextField(null=True, blank=True)
 	
 	def __str__(self):
 		return 'A login attempt to ' + str(self.user) + ' from ' + self.addr + ', ' + str(self.success)
 		
+class MetaViews(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	target_user = models.ForeignKey(User, related_name='target_user', on_delete=models.CASCADE)
+	from_user = models.ForeignKey(User, related_name='from_user', on_delete=models.CASCADE)
+	def __str__(self):
+		return str(self.from_user) + ' viewed ' + str(self.target_user)
 
 # Finally
 class UserBlock(models.Model):
@@ -1587,7 +1694,7 @@ class UserBlock(models.Model):
 class AuditLog(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), (4, "User delete"), (5, "Image delete"), (6, "Purge 1"), (7, "Purge 2"), (8, "Purge 3"), (9, "Purge 4"), (10, "Purge 5"), (11, "Un-purge 1"), ))
+	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), (4, "User delete"), (5, "Image delete"), (6, "Purge 1"), (7, "Purge 2"), (8, "Purge 3"), (9, "Purge 4"), (10, "Purge 5"), (11, "Un-purge 1"), (12, 'Changed server settings'), ))
 	post = models.ForeignKey(Post, related_name='audit_post', null=True, on_delete=models.CASCADE)
 	comment = models.ForeignKey(Comment, related_name='audit_comment', null=True, on_delete=models.CASCADE)
 	user = models.ForeignKey(User, related_name='audit_user', null=True, on_delete=models.CASCADE)
@@ -1634,7 +1741,85 @@ class UserRequest(User):
 	latest = models.DateTimeField(auto_now=True)
 	status = models.SmallIntegerField(default=0, choices=((0, 'submitted'), (1, 'viewed'), (2, 'accepted'), (3, 'decline'), (4, 'ignore'), ))
 
+class Ads(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	url = models.CharField(max_length=256, null=False, blank=False)
+	imageurl = models.ImageField(upload_to='ad/%y/%m/%d/', max_length=100)
 
+	def get_one():
+		# todo see if the database can do this on its own
+		ads = Ads.objects.all()
+		ad = random.choice(ads)
+		return ad
+
+	def ads_available():
+		global adsavailable
+		if(Ads.objects.all().exists()):
+			adsavailable = True
+		else:
+			adsavailable = False
+		return adsavailable
+
+	def __str__(self):
+		return "Ad with id " + str(self.id) + ", created at " + str(self.created) + ", with url " + str(self.url) + ", and imageurl " + str(self.imageurl)
+
+class Motd(models.Model):
+	id = models.AutoField(primary_key=True)
+	order = models.IntegerField(max_length=3, default=1)
+	show = models.BooleanField(default=True)
+	created = models.DateTimeField(auto_now_add=True)
+	Title = models.CharField(max_length=256, blank=True, default='Title')
+	message = models.TextField(null=False, blank=False)
+	hide_date = models.BooleanField(default=False)
+	image = models.ImageField(upload_to='MOTD/%y/%m/%d/', max_length=255, null=True, blank=True)
+
+	def get_one():
+		mesoftheday = Motd.objects.order_by('order', '-id').filter(show=True)
+		return mesoftheday
+
+	def motds_available():
+		global motdsavailable
+		if(Motd.objects.filter(show=True).exists()):
+			motdsavailable = True
+		else:
+			motdsavailable = False
+		return motdsavailable
+
+class welcomemsg(models.Model):
+	id = models.AutoField(primary_key=True)
+	order = models.IntegerField(max_length=3, default=1)
+	show = models.BooleanField(default=True)
+	created = models.DateTimeField(auto_now_add=True)
+	Title = models.CharField(max_length=256, null=False, blank=False, default='Title')
+	message = models.TextField(null=False, blank=False)
+	image = models.ImageField(upload_to='welcomemsg/%y/%m/%d/', max_length=255, null=True, blank=True)
+	
+	def get_one():
+		welmes = welcomemsg.objects.order_by('order', '-id').filter(show=True)
+		return welmes
+
+	def welcomemsg_available():
+		global welcomeisavailable
+		if(welcomemsg.objects.filter(show=True).exists()):
+			welcomeisavailable = True
+		else:
+			welcomeisavailable = False
+		return welcomeisavailable
+		
+# thing will log changes to your bio or nickname
+class ProfileHistory(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+	old_nickname = models.CharField(max_length=64, blank=True, null=True)
+	new_nickname = models.CharField(max_length=64, blank=True)
+	old_comment = models.TextField(blank=True, null=True)
+	new_comment = models.TextField(blank=True)
+	
+	def __str__(self):
+		return str(self.user) + ' changed profile details'
+	
 # blah blah blah
 # this method will be executed when...
 def rm_post_image(sender, instance, **kwargs):

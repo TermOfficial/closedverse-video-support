@@ -3,7 +3,7 @@
       {% if community.banner %}
 	  <span id="sidebar-cover">
         <a href="{% url "main:community-view" community.id %}">
-          <img src="{{ community.banner }}">
+          <img src="{{ community.banner.url }}">
         </a>
       </span>
 	  {% endif %}
@@ -22,6 +22,8 @@
 	  <span class="news-community-badge">Announcement Community</span>
 	  {% elif community.tags == 'changelog' %}
 	  <span class="news-community-badge">Changelog Community</span>
+	  {% elif community.tags == 'general' %}
+	  <!--<span class="news-community-badge">General</span>-->
 	  {% endif %}
       <h1 class="community-name">
         <a href="{% url "main:community-view" community.id %}">{{ community.name }}
@@ -29,13 +31,16 @@
     </header>
 	{% if community.description %}
       <div class="community-description js-community-description">
-        <p class="text js-truncated-text">{{ community.description|linebreaksbr }}</p>
+        <p class="text js-truncated-text">{{ community.description|linebreaksbr|urlize }}</p>
       </div>
 	  {% endif %}
 	  {% if request.user.is_authenticated %}
 		<button type="button" class="symbol button favorite-button{% if community.has_favorite %} checked{% endif %}" data-action-favorite="{% url "main:community-favorite-add" community.id %}" data-action-unfavorite="{% url "main:community-favorite-rm" community.id %}"><span class="favorite-button-text">Favorite</span></button>
 	  <!--<button class="button reload-btn">Refresh posts</button>
 	  -->
+	  {% if request.user == community.creator %}
+	  <button class="button" data-href="{% url "main:community-tools" community.id %}">Community Settings</button>
+	  {% endif %}
 	{% endif %}
   </section>
 </div>

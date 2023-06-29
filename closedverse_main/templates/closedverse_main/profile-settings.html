@@ -5,6 +5,12 @@
 <h2 class="label">{{ title }}</h2>
 <form class="setting-form" method="post" action="{% url "main:user-view" user.username %}">
 <ul class="settings-list">
+
+	{% if profile.cannot_edit %}
+	<p>You cannot change user settings for this account</p>
+	{% endif %}
+
+		{% if not profile.cannot_edit %}
       <li class="setting-nickname">
         <p class="settings-label">Nickname</p>
         <div class="center center-input">
@@ -69,11 +75,18 @@
         <p class="note">If you want to advertise a URL of some sorts on your profile, this is where it goes.</p>
       </li>
       <li class="setting-website">
-        <p class="settings-label">DiscordTag</p>
+        <p class="settings-label">Discord Tag</p>
         <div class="center center-input">
-			<input type="text" name="external" maxlength="255" placeholder="DiscordTag" value="{{ profile.external }}">
+			<input type="text" name="external" maxlength="255" placeholder="Discord Tag" value="{{ profile.external }}">
 		</div>
-        <p class="note">Actually, you don't have to put a DiscordTag here, you can put anything here, such as your PlayStation Network account. Discord sure is popular though.</p>
+        <p class="note">Actually, you don't have to put a Discord Tag here, you can put anything here, such as your PlayStation Network account. Discord sure is popular though.</p>
+      </li>
+      <li class="setting-website">
+        <p class="settings-label">What are you?</p>
+        <div class="center center-input">
+			<input type="text" name="whatareyou" maxlength="255" placeholder="What are you?" value="{{ profile.whatareyou }}">
+		</div>
+        <p class="note">So what exactly are you? Are you a Human, attack helicopter, something in between?</p>
       </li>
       <li class="setting-color">
         <p class="settings-label">Nickname color</p>
@@ -125,6 +138,26 @@
           </div>
         </div>
       </li>
+	  <li>
+        <p class="settings-label"><label for="gender_select">Are you a girl, boy or something else?</label></p>
+        <div class="select-content">
+          <div class="select-button">
+            <select name="gender_select" id="gender_select">
+              <option value="0"{% if profile.gender_is == 0 %} selected{% endif %}>I don't know</option>
+              <option value="1"{% if profile.gender_is == 1 %} selected{% endif %}>Girl</option>
+              <option value="2"{% if profile.gender_is == 2 %} selected{% endif %}>Boy</option>
+			  <option value="3"{% if profile.gender_is == 3 %} selected{% endif %}>Minion</option>
+			  <option value="4"{% if profile.gender_is == 4 %} selected{% endif %}>Toaster</option>
+			  <option value="5"{% if profile.gender_is == 5 %} selected{% endif %}>Dino</option>
+			  <option value="6"{% if profile.gender_is == 6 %} selected{% endif %}>Truck</option>
+			  <option value="7"{% if profile.gender_is == 7 %} selected{% endif %}>Robot</option>
+			  <option value="8"{% if profile.gender_is == 8 %} selected{% endif %}>Monkey</option>
+			  <option value="9"{% if profile.gender_is == 9 %} selected{% endif %}>Big chungus</option>
+			  <option value="10"{% if profile.gender_is == 10 %} selected{% endif %}>Other</option>
+            </select>
+          </div>
+        </div>
+      </li>
       <li>
         <p class="settings-label"><label for="yeahs_visibility">Who should be able to see your Yeahs given?</label></p>
         <div class="select-content">
@@ -149,12 +182,32 @@
           </div>
         </div>
       </li>
+	  <li class="setting-background">
+        <p class="settings-label">Website theme:</p>
+        <div class="center center-input">
+			<input type="text" name="bg_url" maxlength="300" placeholder="Background URL" value="{% if user.bg_url %}{{ user.bg_url }}{% endif %}">
+		</div>
+        <p class="note">To set an image as the background for this site, paste its URL into the box above. Note: this change will only be visible to you.</p>
+		<div class="center center-input">
+			<input type="hidden" name="theme" maxlength="7" placeholder="Enter a hex color value here" value="{{ user.theme }}">
+			<button class="button color-thing2">Open color picker</button>
+		</div>
+		<p class="current-theme" style="color:{{ user.theme }}">Remember to save and refresh the page.</p>
+		{% if user.theme %}<input type="checkbox" name="reset-theme">Reset to default{% endif %}
+		{% if settings.site_wide_theme_hex %}<p class="note">Default theme: "{{ settings.site_wide_theme_hex }}"</p>{% endif %}
+      </li>
+		<li class="setting-background">
+        <p class="settings-label">Change your password:</p>
+	  	  <div class="center center-input">
+			<p class="note">You can now <a href="{% url "main:change-password" %}">change your password</a>.</p>
+		</div>
+		</li>
 		<li class="setting-nnid">
                 <p class="settings-label">Nintendo Network ID</p>
                 <div class="icon-container">
                     <img class="icon nnid-icon mii" src="{% miionly user.mh %}">
                 </div>
-                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not profile.origin_id %} (None){% endif %}" value="{% if profile.origin_id %}{{ profile.origin_id }}{% endif %}" data-action="{% url "main:origin-id-get" %}">
+                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not profile.origin_id %} (None){% endif %}" value="{% if profile.origin_id %}{{ profile.origin_id }}{% endif %}" data-action="https://nnidlt.murilo.eu.org/api.php?output=hash_only&env=production&user_id=">
 				  <input type="hidden" name="mh" value="{{ user.mh }}">
                 <p class="error"></p>
                 <p class="note">Enter your Nintendo Network ID here. It'll appear on your profile if you set it to be visible.</p>
@@ -181,6 +234,7 @@
 	<div class="form-buttons">
 	<input type="submit" class="black-button apply-button" value="Save these settings">
 	</div>
+	{% endif %}
 
 </ul></form></div></div>
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends "closedverse_main/layout.html" %}
+{% load markdown_deux_tags %}
 {% load closedverse_tags %}{% load closedverse_community %}{% block main-body %}
 <div class="main-column replyform-bottom"><div class="post-list-outline">
 <section id="post-content" class="post post-subtype-default">
@@ -9,6 +10,7 @@
     </h1>
   </header>
   {% if post.is_mine or post.can_rm %}
+  {% if user.is_active %}
 	<div class="edit-buttons-content">
 	  <button type="button" class="symbol button edit-button rm-post-button" data-action="{% url "main:post-rm" post.id %}"><span class="symbol-label">Delete</span></button>
 	  {% if post.is_mine and not post.has_edit %}
@@ -18,6 +20,7 @@
 	  <button type="button" class="symbol button edit-button profile-post-button{% if post.is_favorite %} done {% endif %}" data-action="{% if post.is_favorite %}{% url "main:post-unset-profile" post.id %}{% else %}{% url "main:post-set-profile" post.id %}{% endif %}"><span class="symbol-label">Set as profile post</span></button>
 	  {% endif %}
     </div>
+	{% endif %}
 {% endif %}
 
   <div class="user-content">
@@ -25,6 +28,9 @@
     <div class="user-name-content">
 		{% if post.creator.get_class.1 %}<p class="user-organization">{% user_level post.creator %}</p>{% endif %}
       {% p_username post.creator %}
+	  {% if not post.creator.is_active %}
+		  <p style="color: #f00;">Banned</p>
+		  {% endif %}
       <p class="timestamp-container">
         <span class="timestamp">{% time post.created %}</span>
 			{% if post.drawing %}
@@ -59,7 +65,7 @@
 		  {% if post.drawing %}
 		  <p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
 		  {% else %}
-          <p class="post-content-text">{{ post.body|linebreaksbr }}</p>
+          <p class="post-content-text">{{ post.body }}</p>
 	      {% endif %}
 		  
 		  {% if post.poll %}
@@ -85,9 +91,8 @@
 			{% endif %}
 
     <div class="post-meta">
-          <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit yeah-button
+          <button type="button" {% if not post.can_yeah %} disabled{% endif %} class="symbol submit yeah-button
 		  {% if post.has_yeah %}empathy-added{% endif %}
-		  {% if not post.can_yeah %}disabled{% endif %}
 		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
           <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
           <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ all_comment_count }}</span></div>

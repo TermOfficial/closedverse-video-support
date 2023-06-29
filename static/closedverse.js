@@ -2532,6 +2532,7 @@ var Olv = Olv || {};
         $('.community-switcher-tab.gen').on('click',gsl),
 		$('.community-switcher-tab.game').on('click',gsl),
 		$('.community-switcher-tab.special').on('click',gsl);
+		$('.community-switcher-tab.usr').on('click',gsl);
     }),
 	b.router.connect("^/communities.search$", function(c) {
 		$('form.search').on('submit', function(s) {
@@ -3212,8 +3213,8 @@ mode_post = 0;
 								$('p.red').html(null);
 							}
 								$.ajax({
-									url: inp.attr('data-action'),
-									type: 'POST', data: b.Form.csrftoken({'a': inp.val()}),
+									url: inp.attr('data-action') + inp.val(),
+									type: 'GET',
 									success: function(a) {
 										if(a == '') {
 											icon.addClass('none');
@@ -3222,6 +3223,7 @@ mode_post = 0;
 											icon.removeClass('none');
 											icon.attr('src', 'https://mii-secure.cdn.nintendo.net/' + a + '_happy_face.png');
 										}
+										$('input[name=mh]').val(a);
 									}, error: function(a) {
 										$('p.red').html(a.responseText);
 										icon.addClass('none');
@@ -3359,6 +3361,34 @@ mode_post = 0;
 			});
 		});
 	}),
+b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
+        function f(c) {
+            var d = a(this)
+              , e = d.closest("form");
+            b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
+            b.Form.submit(e, d).done(function(a) {
+                b.Net.reload()
+            }))
+        }
+        a(document).on("click", ".apply-button", f),
+        e.done(function() {
+            a(document).off("click", ".apply-button", f)
+        })
+    }),
+	b.router.connect("^/changepassword$", function(c, d, e) {
+        function f(c) {
+            var d = a(this)
+              , e = d.closest("form");
+            b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
+            b.Form.submit(e, d).done(function(a) {
+                b.Net.reload()
+            }))
+        }
+        a(document).on("click", ".apply-button", f),
+        e.done(function() {
+            a(document).off("click", ".apply-button", f)
+        })
+    }),
     b.router.connect("^/settings/(?:account|profile)$", function(c, d, e) {
 		b.Closed.changesel('mymenu')
 			// If we are on profile settings..
@@ -3386,8 +3416,8 @@ mode_post = 0;
 							$('p.error').html(null)
 						}
 							$.ajax({
-								url: inp.attr('data-action'),
-								type: 'POST', data: b.Form.csrftoken({'a': inp.val()}),
+								url: inp.attr('data-action') + inp.val(),
+								type: 'GET',
 								success: function(a) {
 									if(a == '') {
 										$('.nnid-icon.mii').attr('src', '');
@@ -3431,6 +3461,22 @@ mode_post = 0;
 						});
 					$('div.form-buttons > input').click(function(a) {
 						$('.color-thing').spectrum('destroy');
+					});
+				});
+				$('.color-thing2').click(function(a) {
+					a.preventDefault();
+						$('.color-thing2').spectrum({
+							color: $('input[name=theme]'),
+							preferredFormat: "hex",
+							showInput: true,
+							flat: true,
+							change: function(color) {
+								$('.current-theme').attr('style', 'color:' + color);
+								$('input[name=theme]').val(color);
+							}
+						});
+					$('div.form-buttons > input').click(function(a) {
+						$('.color-thing2').spectrum('destroy');
 					});
 				});
 //			}
@@ -3507,6 +3553,34 @@ mode_post = 0;
 	b.Closed.changesel("news");
 	}),
 	*/
+	b.router.connect("^/communities/[0-9]+/(tools)$", function(c, d, e) {
+        function f(c) {
+            var d = a(this)
+              , e = d.closest("form");
+            b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
+            b.Form.submit(e, d).done(function(a) {
+                b.Net.reload()
+            }))
+        }
+        a(document).on("click", ".apply-button", f),
+        e.done(function() {
+            a(document).off("click", ".apply-button", f)
+        })
+    }),
+	b.router.connect("^/c/create$", function(c, d, e) {
+        function f(c) {
+            var d = a(this)
+              , e = d.closest("form");
+            b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
+            b.Form.submit(e, d).done(function(a) {
+                b.Net.reload()
+            }))
+        }
+        a(document).on("click", ".apply-button", f),
+        e.done(function() {
+            a(document).off("click", ".apply-button", f)
+        })
+    }),
     b.init.done(function(a) {
         a(document).on("olv:modal:report-violation olv:modal:report-violator", function(a, b, c) {
             function d() {

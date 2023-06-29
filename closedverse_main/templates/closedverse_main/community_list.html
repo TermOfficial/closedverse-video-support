@@ -7,22 +7,55 @@
 		<form action="{% url "main:community-search" %}" class="search">
 			<input maxlength="32" name="query" placeholder="Search all communities" type="text"><input title="Search" type="submit" value="q">
 		</form>
-		<div class="post-list-outline index-memo">
-			<h2 class="label">Closedverse</h2>
-			<h2>Who?</h2>
-                        this time by term greabaegrjlesnjtsrtlj
-                        <h2>OMFG stop it with the clones</h2>
-                        no
-                        <h2>can i hack this please</h2>
-                        please do not
-                        <h2>what about closedverse-le</h2>
-                        its REALLLLY buggy but if you want to see it on the off chance it hasnt shit itself yet <a href="https://testyy.termy.lol">here</a>
-                        <h2>thank you for this</h2>
-                        you're not welcome this shouldnt exist in the first place
-                        <h2>Shouldn't you be working on rverse?</h2>
-                        dont have access to the computer that i use to work on it lol sorry
-
+		
+		{% if user.is_warned %}
+		<div class="notice" style="background-color: #ffc783;border: 1px solid #ffb358;">
+		<p><b>WARNING</b>: You have been issued a warning by an administrator. No features have been restricted, as this is just a warning.
+		<div> 
+		{% if user.get_warned_reason %}
+		<p>Reason: "{{ user.get_warned_reason }}"</p>
+		{% endif %}
 		</div>
+		</div>
+		{% endif %}
+		{% if settings.memo_title and settings.memo_msg %}
+				<div class="post-list-outline index-memo">
+					<h2 class="label">{{ settings.memo_title }}</h2>
+					{% autoescape off %}{{ settings.memo_msg }}{% endautoescape %}
+				</div>
+		{% endif %}
+
+
+	{% if availablemotds and request.user.is_authenticated %}
+	<div class="post-list-outline index-memo">
+		<h2 class="label">MOTD / News</h2>
+		{% for mesoftheday in mesoftheday %}
+		{% if mesoftheday.Title %}<h2>{{ mesoftheday.Title }}</h2>{% endif %}
+		<p>{{ mesoftheday.message|linebreaksbr|urlize }}</p>
+		{% if mesoftheday.image %}<image src={{ mesoftheday.image.url }}></image>{% endif %}
+		{% if mesoftheday.hide_date == False %}<p class="memo-date">Posted {{ mesoftheday.created }}</p>{% endif %}
+		{% endfor %}
+	</div>
+	{% endif %}
+		
+	{% if availablemes and not request.user.is_authenticated %}
+	<div class="post-list-outline index-memo">
+		<h2 class="label">Welcome to Closedverse!</h2>
+		{% for welmes in welmes %}
+		<h2>{{ welmes.Title }}</h2>
+		<p>{{ welmes.message|linebreaksbr|urlize }}</p>
+		{% if welmes.image %}<image src={{ welmes.image.url }}></image>{% endif %}
+		{% endfor %}
+	</div>
+	{% endif %}
+	{% if request.user.c_tokens > 0 %}<a class="big-button" href={% url "main:community-create" %}><span class="symbol-label">Create a community</span></a>{% endif %}
+		{% if availableads %}
+			<div class="adx">
+				<h3>User-Generated Ad</h3>
+                <p><a href="/help/whatads">What are user-generated ads?</a></p>
+				<a href="{{ ad.url }}"><img src="{{ ad.imageurl.url }}"></a>
+			</div>
+		{% endif %}
 	</div>
 	<div class="community-main">
 	{% if favorites %}
@@ -33,11 +66,11 @@
 				<li class="test-favorite-community">
 				  <a href="{% url "main:community-view" favorite.id %}" class="icon-container">
 					<img src="{{ favorite.icon }}" class="icon">
-					
+
 				  </a>
 				</li>
 			 {% endfor %}
-				
+
 			<li class="read-more">
 			  <a href="{% url "main:community-favorites" %}" class="favorite-community-link symbol"><span class="symbol-label">Show more</span></a>
 			</li>
@@ -50,6 +83,7 @@
 			{% community_page_element general "General Communities" %}
 			{% community_page_element game "Game Communities" %}
 			{% community_page_element special "Special Communities" %}
+			{% community_page_element user_communities "User owned Communities" %}
 			<a href="{% url "main:community-viewall" %}" class="big-button">Show more</a>
 	</div>
 	<div id="community-guide-footer">
@@ -57,6 +91,7 @@
 			<a class="arrow-button" href="{% url "main:help-why" %}"><span>Why join?</span></a>
 			<a class="arrow-button" href="{% url "main:help-rules" %}"><span>Closedverse Rules</span></a>
 			<a class="arrow-button" href="{% url "main:help-faq" %}"><span>Frequently Asked Questions (FAQ)</span></a>
+			<a class="arrow-button" href="{% url "main:what-ads" %}"><span>What are user-generated ads?</span></a>
 			{% if settings.CLOSEDVERSE_PROD %}
 			<a class="arrow-button" href="{% url "main:help-contact" %}"><span>Contact information</span></a>
 			{% endif %}
