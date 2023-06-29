@@ -195,7 +195,7 @@ RECAPTCHA_PUBLIC_KEY = None
 RECAPTCHA_PRIVATE_KEY = None
 
 # Key for IPHub service for Closedverse, which detects proxies.
-IPHUB_KEY = "MjEwMjE6a1owM2dzd0dtOEZhMU1ROGhibjNiYzlLcWlaQWVpRWs="
+IPHUB_KEY = ""
 # If this is set to True, then users will receive an error
 # upon trying to sign up for the site behind a proxy.
 # Uses IPHub service and requires an API key defined above.
