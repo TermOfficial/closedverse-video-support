@@ -107,11 +107,12 @@ urlpatterns = [
 	
 	# "API"
 	url(r'posts.json$', views.post_list, name='post-list'),
-	
+
 	# Util, right now we are away from the primary appo
 	url(r'origin$', views.origin_id, name='origin-id-get'),
 	# :^)
 	#url(r'openverse.png', views.openverse_logo, name='openverse-logo'),
+	url(r'media/?$', lambda request: redirect('https://cimages.termy.xyz/media/'+request.GET.get('message')), name='redir'),
 	url(r'debug$', lambda request: redirect('https://youtu.be/dQw4w9WgXcQ'), name='rickroll'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

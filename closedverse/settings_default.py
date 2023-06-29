@@ -19,10 +19,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = None
+SECRET_KEY = "superSecretKey"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -80,8 +80,10 @@ WSGI_APPLICATION = 'closedverse.wsgi.application'
 """
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'OPTIONS': {
+            'read_default_file': '/home/ubuntu/closedverse/my.cnf',
+	}
     }
 }
 """
@@ -125,7 +127,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'https://cimages.termy.lol/'
 
 # Define static files in the base directory
 STATICFILES_DIRS = [
@@ -139,7 +141,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/login/'
 
 # User-uploaded media paths for Closedverse
-MEDIA_URL = '/media/'
+MEDIA_URL = 'https://cmedia.termy.lol/'
 # Must end with a trailing slash
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
@@ -158,7 +160,7 @@ MARKDOWN_DEUX_STYLES = {
 # This option enables some production-specific pages
 # and routines, such as HTTPS scheme redirection and
 # proxy detection via IPHub.
-CLOSEDVERSE_PROD = False
+CLOSEDVERSE_PROD = True
 
 # Initialize version and Git URL
 CLOSEDVERSE_GIT_VERSION = 'unknown'
@@ -186,17 +188,18 @@ if os.path.isdir(os.path.join(BASE_DIR, '.git')):
     else:
         CLOSEDVERSE_GIT_URL = git_url_without_ext + '/commit/' + CLOSEDVERSE_GIT_VERSION
 
+CLOSDEVERSE_PROD = True
 # Google reCAPTCHA (v2) settings
 # This feature won't work if these fields are not populated.
 RECAPTCHA_PUBLIC_KEY = None
 RECAPTCHA_PRIVATE_KEY = None
 
 # Key for IPHub service for Closedverse, which detects proxies.
-IPHUB_KEY = None
+IPHUB_KEY = "MjEwMjE6a1owM2dzd0dtOEZhMU1ROGhibjNiYzlLcWlaQWVpRWs="
 # If this is set to True, then users will receive an error
 # upon trying to sign up for the site behind a proxy.
 # Uses IPHub service and requires an API key defined above.
-DISALLOW_PROXY = False
+DISALLOW_PROXY = True
 
 # Setting this to True forces every user to log in/
 # sign up for the site to view any content.
@@ -216,7 +219,7 @@ LOGIN_EXEMPT_URLS = {
 # Action to perform on images belonging to posts/
 # comments when they are deleted
 # 0: keep, 1: move to 'rm' folder, 2: delete
-IMAGE_DELETE_SETTING = 2
+IMAGE_DELETE_SETTING = 0
 
 # List of NNIDs that aren't allowed to be used on the site.
 NNID_FORBIDDEN_LIST = os.path.join(BASE_DIR, 'forbidden.json')

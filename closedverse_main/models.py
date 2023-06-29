@@ -143,7 +143,7 @@ class User(models.Model):
 	# LEVEL: 0-1 is default, everything else is just levels
 	level = models.SmallIntegerField(default=0)
 	# ROLE: This doesn't have anything
-	role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'tester'), (7, 'urapp'), (8, 'developer'), ))
+	role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'cool'), (7, 'urapp'), (8, 'owner'), (9, 'badgedes'), (10, 'jack'), (11, 'verified'),))
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	
 	# Things that don't have to do with auth lol
@@ -231,14 +231,17 @@ class User(models.Model):
 		
 	def get_class(self):
 			first = {
-			1: 'tester',
+			1: 'cool',
 			2: 'administrator',
 			3: 'moderator',
 			4: 'openverse',
 			5: 'donator',
-			6: 'tester',
+			6: 'cool',
 			7: 'urapp',
 			8: 'developer',
+			9: 'badgedes',
+			10: 'jack',
+			11: 'verified',
 			}.get(self.role, '')
 			second = {
 			1: "Bot",
@@ -246,9 +249,12 @@ class User(models.Model):
 			3: "Moderator",
 			4: "O-PHP-enverse Man",
 			5: "Donator",
-			6: "Tester",
+			6: "Cool Person",
 			7: "cave story is okay",
-			8: "Friendship ended with PHP / Now PYTHON is my best friend",
+			8: "python may be annoying but its fun to check out -terminal",
+			9: "Badge Designer",
+			10: "stupid man",
+			11: "Verified",
 			}.get(self.role, '')
 			if first:
 				first = 'official ' + first
@@ -670,9 +676,17 @@ class Community(models.Model):
 			return 1
 		upload = None
 		drawing = None
+		video = None
+		body = request.POST['body']
+		if request.POST.get('_post_type') == 'painting':
+			body = 'drawing'
 		if request.FILES.get('screen'):
 			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
+				return 2
+		if request.FILES.get('video'):
+			video = util.video_upload(request.FILES['video'])
+			if video == 1:
 				return 2
 		if request.POST.get('_post_type') == 'painting':
 			if not request.POST.get('painting'):
@@ -681,9 +695,12 @@ class Community(models.Model):
 			if drawing == 1:
 				return 2
 		# Check for spam using our OWN ALGO!!!!!!!!!
-		if request.user.has_postspam(request.POST.get('body'), upload, drawing):
+		if request.user.has_postspam(body, upload, drawing):
 			return 7
-		new_post = self.post_set.create(body=request.POST.get('body'), creator=request.user, community=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, drawing=drawing, url=request.POST.get('url'))
+		for keyword in ['faggot', 'fag', 'nigger', 'nigga', 'hitler']:
+			if keyword in body:
+				return 9
+		new_post = self.post_set.create(body=body, creator=request.user, community=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, drawing=drawing, url=request.POST.get('url'), video=video)
 		new_post.is_mine = True
 		return new_post
 
@@ -713,6 +730,7 @@ class Post(models.Model):
 	body = models.TextField(null=True)
 	drawing = models.CharField(max_length=200, null=True, blank=True)
 	screenshot = models.CharField(max_length=1200, null=True, blank=True, default='')
+	video = models.CharField(max_length=256, null=True, blank=True, default='')
 	url = models.URLField(max_length=1200, null=True, blank=True, default='')
 	spoils = models.BooleanField(default=False)
 	created = models.DateTimeField(auto_now_add=True)
@@ -1079,7 +1097,7 @@ class Profile(models.Model):
 	#birthday = models.DateField(null=True, blank=True)
 	id_visibility = models.SmallIntegerField(default=0, choices=visibility)
 	pronoun_is = models.IntegerField(default=0, choices=(
-	(0, "I don't know"), (1, "He/him"), (2, "She/her"), (3, "He/she"), (4, "It")
+	(0, "I don't know"), (1, "He/him"), (2, "She/her"), (3, "He/she"), (4, "They/them"), (5, "It")
 	))
 
 	let_friendrequest = models.SmallIntegerField(default=0, choices=visibility)
@@ -1183,6 +1201,7 @@ class Notification(models.Model):
 	(2, 'Comment on my post'),
 	(3, 'Comment on others\' post'),
 	(4, 'Follow to me'),
+	(5, 'New Announcement'),
 	))
 	merges = models.TextField(blank=True, default='')
 	context_post = models.ForeignKey(Post, null=True, blank=True, on_delete=models.CASCADE)

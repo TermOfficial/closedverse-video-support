@@ -26,6 +26,9 @@
 			{% if post.screenshot %}
 			<a href="{% url "main:post-view" post.id %}" class="screenshot-container still-image"><img src="{{ post.screenshot }}"></a>
 			{% endif %}
+			{% if post.video %}
+			<div class="screenshot-container video"><video src="{{ post.video }}" width="50" height="48"></video></div>
+			{% endif %}
 			{% if post.drawing %}
 			<p class="post-content-memo"><img src="{{ post.drawing }}" class="post-memo"></p>
 			{% else %}

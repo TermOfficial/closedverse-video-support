@@ -494,7 +494,11 @@ var Olv = Olv || {};
 			Olv.Form.get('/lights')
 		},
 		prlinkConf: function() {
-			$('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>Confirm link</h1><div class=window-body><p class=window-body-content>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
+            if(ass.includes("https://closedverse.termy.lol")){
+			    $('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>Link Redirection</h1><div class=window-body><p class=window-body-content>Are you sure you want to go to <b>'+ass+'</b> on this site?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
+            } else {
+                $('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>You are now leaving Closedverse.</h1><div class=window-body><p class=window-body-content>You are now exiting the closedverse website.<br>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
+            }
 			var g = new Olv.ModalWindow($('.linkc'));g.open();
 		},
 		changesel: function(a) {
@@ -2870,6 +2874,10 @@ $('.post-poll .poll-votes').on('click', function() {
 		$('.edit-post-button').on('click',function(){
 			if($('.post-content-memo').length) {
 				b.showMessage("", "You can't edit a drawing, sorry.");
+            } else if($('.vidya').length) {
+                b.showMessage("", "You can't edit your uploaded video, sorry. But you can edit the contents of the post.");
+                et();
+                b.Form.toggleDisabled(submit_btn, true);
 			} else {
 					et();
 					b.Form.toggleDisabled(submit_btn, true);

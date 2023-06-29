@@ -221,10 +221,26 @@ def signup_page(request):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
-		if settings.CLOSEDVERSE_PROD:
-			for keyword in ['admin', 'admln', 'adrnin', 'admn', ]:
-				if keyword in request.POST['username'].lower():
-					return HttpResponseForbidden("You aren't funny. Please use a funny name.")
+		for keyword in ['admin', 'admln', 'adrnin', 'admn', 'arian', 'kordi', 'windowscj', 'gab', 'gabalt', 'terminal', 'term', 'termy', 'pp', 'penis', 'nazi', 'hitler', 'hitlre', 'ihtler', 'heil', 'closedverse', 'nigga', 'nigger', 'niger', 'nigga', 'faggot', 'fag', 'kkk', 'smf9', 'dakux', 'dacucks', 'adrian']:
+			if keyword in request.POST['username'].lower():
+				return HttpResponseForbidden("That username isn't funny. Please pick a funny username.")
+			if keyword in request.POST['nickname'].lower():
+				return HttpResponseForbidden("That nickname isn't funny. Please pick a funny nickname.")
+		for keyword in ['adam']:
+			if keyword in request.POST['username'].lower():
+				return HttpResponseForbidden("Adam, no.")
+			if keyword in request.POST['nickname'].lower():
+				return HttpResponseForbidden("Adam, no.")
+		if request.POST['username'].lower() == "funny" or request.POST['username'].lower() == "Funny":
+			return HttpResponseForbidden("I'm laughing so hard right now!! No seriously. Pick a better username.")
+		if request.POST['nickname'].lower() == "funny" or request.POST['nickname'].lower() == "Funny":
+			return HttpResponseForbidden("I'm laughing so hard right now!! No seriously. Pick a better nickname.")
+		for keyword in ['doeggs']:
+			if keyword in request.POST['username'].lower():
+				return HttpResponseForbidden("the world may never know")
+		for keyword in ['windowscj', 'gabalt']:
+			if keyword in request.POST['origin_id'].lower():
+				return HttpResponseForbidden("You're very funny. Unfortunately your funniness blah blah blah fuck off.")
 		conflicting_user = User.objects.filter(Q(username__iexact=request.POST['username']) | Q(username__iexact=request.POST['username'].replace(' ', '')))
 		if conflicting_user:
 			return HttpResponseBadRequest("A user with that username already exists.")
@@ -312,6 +328,8 @@ def logout_page(request):
 def user_view(request, username):
 	"""The user view page, has recent posts/yeahs."""
 	user = get_object_or_404(User, username__iexact=username)
+	if user.username == "ClosedverseAdmin":
+		raise Http404()
 	if user.is_me(request):
 		title = 'My profile'
 	else:
@@ -811,6 +829,7 @@ def post_create(request, community):
 			5: "Uh-oh, that URL wasn't valid..",
 			6: "Not allowed.",
 			7: "Please don't spam.",
+			9: "You're very funny. Unfortunately your funniness blah blah blah fuck off.",
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
@@ -1010,6 +1029,7 @@ def poll_unvote(request, poll):
 @login_required
 def user_follow(request, username):
 	user = get_object_or_404(User, username=username)
+	"""
 	if settings.CLOSEDVERSE_PROD:
 		# Issue 69420: PF2M is getting more follows than me.
 		if user.username == 'PF2M':
@@ -1017,6 +1037,7 @@ def user_follow(request, username):
 				User.objects.get(id=1).follow(request.user)
 			except:
 				pass
+	"""
 	if user.follow(request.user):
 		# Give the notification!
 		Notification.give_notification(request.user, 4, user)
@@ -1028,6 +1049,7 @@ def user_unfollow(request, username):
 	user = get_object_or_404(User, username=username)
 	if settings.CLOSEDVERSE_PROD:
 		# Issue 69420 is still active
+		"""
 		if user.id == 1:
 			try:
 				pf2m = User.objects.get(username='PF2M')
@@ -1038,6 +1060,7 @@ def user_unfollow(request, username):
 					pf2m.unfollow(request.user)
 					user.unfollow(request.user)
 					return json_response("i'm crying")
+		"""
 	user.unfollow(request.user)
 	return HttpResponse()
 @require_http_methods(['POST'])
@@ -1404,6 +1427,7 @@ def post_list(request):
 			'content': (post.body or None),
 			'drawing': (post.drawing or None),
 			'screenshot': (post.screenshot or None),
+			'video': (post.video or None),
 			'url': (post.url or None),
 		})
 

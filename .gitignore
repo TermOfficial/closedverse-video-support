@@ -9,6 +9,7 @@ __pycache__/
 *.db
 *.sqlite3
 *.sql
+*.cnf
 
 # Swap and save file for editors
 *.swp

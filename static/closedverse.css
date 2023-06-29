@@ -1281,6 +1281,9 @@ content: "F";
 .icon-container.developer:after {
   content: url("img/developer.png");
 }
+.icon-container.badgedes:after {
+  content: url("img/badgedes.png");
+}
 .icon-container.openverse:after {
   content: url("img/open-dev.png");
 }
@@ -1293,8 +1296,11 @@ content: "F";
 .icon-container.donator:after {
   content: url("img/donator.png");
 }
-.icon-container.tester:after {
-  content: url("img/tester.png");
+.icon-container.cool:after {
+  content: url("img/cool.png");
+}
+.icon-container.jack:after {
+  content: url("img/jack.png");
 }
 .icon-container.verified:after {
   content: url("img/verified.png");
@@ -1365,6 +1371,9 @@ content: "F";
 .post-permalink-feeling-icon.developer {
   position: relative;
 }
+.post-permalink-feeling-icon.badgedes {
+  position: relative;
+}
 .post-permalink-feeling-icon.openverse {
   position: relative;
 }
@@ -1377,7 +1386,10 @@ content: "F";
 .post-permalink-feeling-icon.donator {
   position: relative;
 }
-.post-permalink-feeling-icon.tester {
+.post-permalink-feeling-icon.cool {
+  position: relative;
+}
+.post-permalink-feeling-icon.jack {
   position: relative;
 }
 .post-permalink-feeling-icon.administrator:after {
@@ -1391,6 +1403,15 @@ content: "F";
 }
 .post-permalink-feeling-icon.developer:after {
   content: url("img/developer.png");
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+}
+.post-permalink-feeling-icon.badgedes:after {
+  content: url("img/badgedes.png");
   position: absolute;
   display: block;
   top: 0;
@@ -1434,8 +1455,17 @@ content: "F";
   width: 22px;
   height: 22px;
 }
-.post-permalink-feeling-icon.tester:after {
-  content: url("img/tester.png");
+.post-permalink-feeling-icon.cool:after {
+  content: url("img/cool.png");
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0;
+  width: 22px;
+  height: 22px;
+}
+.post-permalink-feeling-icon.jack:after {
+  content: url("img/jack.png");
   position: absolute;
   display: block;
   top: 0;
@@ -7527,10 +7557,17 @@ margin: 10px 0px 15px !important;
     width: 17px;
     height: 17px;
   }
-  #empathy-content .icon-container.tester:after,
-  #reply-content .icon-container.tester:after,
-  .news-list .icon-container.tester:after {
-    content: url(img/tester.png);
+  #empathy-content .icon-container.cool:after,
+  #reply-content .icon-container.cool:after,
+  .news-list .icon-container.cool:after {
+    content: url(img/cool.png);
+    width: 17px;
+    height: 17px;
+  }
+  #empathy-content .icon-container.jack:after,
+  #reply-content .icon-container.jack:after,
+  .news-list .icon-container.jack:after {
+    content: url(img/jack.png);
     width: 17px;
     height: 17px;
   }
@@ -7552,6 +7589,13 @@ margin: 10px 0px 15px !important;
   #reply-content .icon-container.developer:after,
   .news-list .icon-container.developer:after {
     content: url("img/developer.png");
+    width: 17px;
+    height: 17px;
+  }
+  #empathy-content .icon-container.badgedes:after,
+  #reply-content .icon-container.badgedes:after,
+  .news-list .icon-container.badgedes:after {
+    content: url("img/badgedes.png");
     width: 17px;
     height: 17px;
   }

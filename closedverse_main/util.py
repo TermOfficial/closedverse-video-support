@@ -1,4 +1,3 @@
-from lxml import html
 # Todo: move all requests to using requests instead of urllib3
 import urllib.request, urllib.error
 import requests
@@ -7,6 +6,7 @@ from random import choice
 import json
 import time
 import os.path
+import random
 from PIL import Image, ExifTags, ImageFile
 from datetime import datetime
 from binascii import crc32
@@ -100,6 +100,18 @@ def recaptcha_verify(request, key):
 	return True
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+def video_upload(video, stream=False):
+	randnum = random.randint(10000, 99999)
+	name, extension = os.path.splitext(video.name)
+	fname = settings.MEDIA_ROOT + str(randnum) + ".mp4"
+	if not os.path.exists(settings.MEDIA_ROOT + fname):
+		with open(fname, "wb+") as destination:
+			for chunk in video.chunks():
+				destination.write(chunk)
+		return settings.MEDIA_URL + str(randnum) + ".mp4"
+	else:
+		return settings.MEDIA_URL + str(randnum) + ".mp4"
+
 def image_upload(img, stream=False, drawing=False):
 	if stream:
 		decodedimg = img.read()
@@ -110,8 +122,6 @@ def image_upload(img, stream=False, drawing=False):
 			return 1
 	if stream:
 		if not 'image' in img.content_type:
-			return 1
-		if 'audio' in img.content_type or 'video' in img.content_type:
 			return 1
 	# upload svg?
 	#if 'svg' in mime:
