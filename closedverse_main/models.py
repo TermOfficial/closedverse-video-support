@@ -700,7 +700,7 @@ class Community(models.Model):
 		for keyword in ['faggot', 'fag', 'nigger', 'nigga', 'hitler']:
 			if keyword in body:
 				return 9
-		if isspace(body):
+		if body.isspace():
 			return 10
 		new_post = self.post_set.create(body=body, creator=request.user, community=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, drawing=drawing, url=request.POST.get('url'), video=video)
 		new_post.is_mine = True
