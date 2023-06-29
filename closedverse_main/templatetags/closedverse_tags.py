@@ -84,7 +84,7 @@ def loading_spinner():
 @register.simple_tag
 def get_git_version():
 	if settings.CLOSEDVERSE_GIT_HAS_CHANGES:
-		return settings.CLOSEDVERSE_GIT_VERSION + ' (dirty)'
+		return settings.CLOSEDVERSE_GIT_VERSION + ''
 	return settings.CLOSEDVERSE_GIT_VERSION
 
 @register.simple_tag

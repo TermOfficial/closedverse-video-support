@@ -16,7 +16,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # The secret key is set by a "SECRET_KEY" environment variable
 # example: ... SECRET_KEY=my-secret ./manage.py runserver
-SECRET_KEY = "secretKey!!CashMonies$$!!"
+SECRET_KEY = "WJNDKANJFLWNA420*^$#*@^&%*#^(@$^&!^(*^$(8932946289328915689358)))"
 
 DEBUG = False
 

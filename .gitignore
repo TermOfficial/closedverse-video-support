@@ -17,7 +17,7 @@ __pycache__/
 *.save
 
 # Local settings
-/closedverse/settings.py
+closedverse/settings.py
 
 # Migrations
 closedverse_main/migrations
