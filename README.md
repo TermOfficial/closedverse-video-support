@@ -1,6 +1,5 @@
-# Closedverse
-This isn't finished yet.
-Meant to be a random out-of-the-blue parody of Openverse that's supposed to be unironically better than Openverse, before Openverse even has hosting.
+# closedverse-video-support
+so its closedverse, but with video mp4 support (please merge arian)
 
 # Requirements
   * Python 3.6.2?
@@ -18,10 +17,7 @@ Meant to be a random out-of-the-blue parody of Openverse that's supposed to be u
 
 [![forthebadge](https://forthebadge.com/images/badges/you-didnt-ask-for-this.svg)](https://forthebadge.com)
 # Usage
-It's a standard Django app.
-
-Make the config, migrate, then either `runserver` or run it in uWSGI.
-If you don't know how to set up a Django app, look it up please.
+just set it up the same way as you would with closedverse EXCEPT rename settings_stripped.py to settings.py
 
 # Copyright
 Copyright 2017 Arian Kordi, all rights reserved to their respective owners. (Nintendo, Hatena Co Ltd.)
