@@ -34,9 +34,10 @@ class ClosedMiddleware(object):
 				return HttpResponseForbidden()
 			elif request.user.is_active() == 2:
 				return redirect(settings.inactive_redirect)
-			"""
+			
 			if not request.user.is_active() :
 				return HttpResponseForbidden()
+			"""
 			# If there isn't a request.session
 			if not request.session.get('passwd'):
 				request.session['passwd'] = request.user.password

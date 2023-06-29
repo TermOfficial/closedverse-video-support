@@ -1,5 +1,5 @@
 {% if not post.is_rm %}
-{% load closedverse_tags %}<div id="{{ post.unique_id }}" {% if post.spoils or not post.creator.is_active %}data-href-hidden{% else %}data-href{% endif %}="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}" class="post post-subtype-default trigger{% if post.spoils or not post.creator.is_active %} hidden test-hidden{% endif %}{% if type == 2 %} post-list-outline{% endif %}" tabindex="0">
+{% load closedverse_tags %}<div id="{{ post.unique_id }}" {% if post.spoils and not post.is_mine or not post.creator.is_active %}data-href-hidden{% else %}data-href{% endif %}="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}" class="post post-subtype-default trigger{% if post.spoils and not post.is_mine or not post.creator.is_active %} hidden test-hidden{% endif %}{% if type == 2 %} post-list-outline{% endif %}" tabindex="0">
   {% if with_community_container %}
   <p class="community-container">
 	{% if post.is_reply %}
@@ -43,7 +43,7 @@
 			{% endif %}
 			{% if post.screenshot %}<a class="screenshot-container still-image" href="{% if post.is_reply %}{% url "main:comment-view" post.id %}{% else %}{% url "main:post-view" post.id %}{% endif %}"><img src="{{ post.screenshot }}"></a>{% endif %}
 			{% if post.video %}<div class="screenshot-container still-image"><video class="vidya" controls src="{{ post.video }}" width="480" height="276"></video></div>{% endif %}
-		{% if post.spoils and post.creator.is_active and not post.is_mine %}
+		{% if post.spoils and not post.is_mine and post.creator.is_active %}
 		<div class="hidden-content"><p>This post contains spoilers.</p>
               <button type="button" class="hidden-content-button">View Post</button>
         </div>
