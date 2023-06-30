@@ -113,21 +113,22 @@ WSGI_APPLICATION = 'closedverse.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-"""
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': '/home/ubuntu/closedverse/my.cnf',
-        }
+        'NAME': 'indigo4',
+	'USER': 'indigo',
+	'PASSWORD': 'indigo',
     }
-}"""
-DATABASES = {
+}
+"""DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'closedverse.sqlite3'),
     }
 }
+"""
 
 """
 # log errors.

@@ -11,7 +11,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Exists, OuterRef
 from .models import *
 from .util import *
-from .serializers import CommunitySerializer
 from closedverse import settings
 import re
 from django.urls import reverse
@@ -19,7 +18,8 @@ from random import getrandbits
 from random import choice
 from json import dumps, loads
 import sys, traceback
-from subprocess import Popen, PIPE
+import base64
+import subprocess
 from datetime import datetime
 import django.utils.dateformat
 from binascii import hexlify

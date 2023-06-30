@@ -1,7 +1,7 @@
 # Todo: move all requests to using requests instead of urllib3
 import urllib.request, urllib.error
 import requests
-from lxml import etree
+#from lxml import etree
 from random import choice
 import json
 import time
@@ -26,38 +26,23 @@ from os import remove, rename
 
 def HumanTime(date, full=False):
 	now = time.time()
-	if ((now - date) >= 345600) or full:
+	time_difference = now - date
+	time_units = {86400: 'day', 3600: 'hour', 60: 'minute'}
+	if time_difference >= 259200 or full:
 		return datetime.fromtimestamp(date).strftime('%m/%d/%Y %I:%M %p')
-	interval = (now - date) or 1
-	if interval <= 59:
+	elif time_difference <= 59:
 		return 'Less than a minute ago'
-	intvals = [86400, 3600, 60, ]
-	for i in intvals:
-		if interval < i:
-			continue
-		nounits = floor(interval / i)
-		text = {86400: 'day', 3600: 'hour', 60: 'minute', }.get(i)
-		if nounits > 1:
-			text += 's'
-		return str(nounits) + ' ' + text + ' ago';
-
+	else:
+		for unit, unit_name in time_units.items():
+			if time_difference < unit:
+				continue
+			else:
+				number_of_units = floor(time_difference / unit)
+				if number_of_units > 1:
+					unit_name += 's'
+				return f'{number_of_units} {unit_name} ago'
 
 def get_mii(id):
-	# Using Miiverse off-device server, doesn't work after Miiverse shutdown
-	"""
-	try:
-		page = urllib.request.urlopen('https://miiverse.nintendo.net/users/{0}/favorites'.format(id)).read()
-	except urllib.error.HTTPError:
-		return False
-	ftree = html.fromstring(page)
-	miihash = ftree.xpath('//*[@id="sidebar-profile-body"]/div/a/img/@src')[0].split('.net/')[1].split('_n')[0]
-	screenname = ftree.xpath('//*[@id="sidebar-profile-body"]/a/text()')[0]
-	ou_check = ftree.xpath('//*[@id="sidebar-profile-body"]/div/@class')
-	if ou_check and 'official-user' in ou_check[0]:
-		return False
-	if "img/anonymous-mii.png" in miihash:
-		miihash = ''
-	"""
 	# Using AccountWS
 	dmca = {
 		'X-Nintendo-Client-ID': 'a2efa818a34fa16b8afbc8a74eba3eda',
@@ -99,7 +84,6 @@ def recaptcha_verify(request, key):
 		return False
 	return True
 
-ImageFile.LOAD_TRUNCATED_IMAGES = True
 def video_upload(video, stream=False):
 	randnum = random.randint(10000, 99999)
 	name, extension = os.path.splitext(video.name)
@@ -112,6 +96,7 @@ def video_upload(video, stream=False):
 	else:
 		return settings.MEDIA_URL + str(randnum) + ".mp4"
 
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 def image_upload(img, stream=False, drawing=False):
 	if stream:
 		decodedimg = img.read()
