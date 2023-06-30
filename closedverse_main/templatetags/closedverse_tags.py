@@ -51,6 +51,15 @@ def empathy_txt(feeling=0, has=False):
 	5: 'Yeah...',
 	38: 'Nyeah~',
 	2012: 'olv.portal.miitoo.',
+#	4: 'yeah...',
+#	5: 'yeah...',
+#	38: 'something something balls',
+#    39: 'lol i lied',
+#	69: 'Adam is gay.',
+#    70: 'I am a faggot!',
+#    71: 'Juice',
+#    72: 'Commit Suicide',
+#    73: 'Fresh!',
 	}.get(feeling, 'Yeah!')
 	# olv.portal.miitoo is going to be the only easter egg in this thing ever
 @register.inclusion_tag('closedverse_main/elements/p_username.html')
@@ -83,8 +92,6 @@ def loading_spinner():
 	}
 @register.simple_tag
 def get_git_version():
-	if settings.CLOSEDVERSE_GIT_HAS_CHANGES:
-		return settings.CLOSEDVERSE_GIT_VERSION + ''
 	return settings.CLOSEDVERSE_GIT_VERSION
 
 @register.simple_tag

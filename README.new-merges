@@ -1,0 +1,24 @@
+things NOT copied from cedar-django:
+* any refined help pages
+* no cedar name or logo
+* most roles/badges
+* you can't yeah your own posts like cedar-django allowed
+* probably more
+
+features rougly added:
+* improvements to bans: read-only "disabled" mode, warnings, indicating a user's ban status or warnings
+* "User Tools" lets you see or modify user data outside of the admin panel
+* user-created communities + tokens, editing communities "Community Tools"
+* new profile fields
+* motd on front page
+* "user-generated ads"?
+* new ImageFields for community icons which also lets you upload them from admin panel
+* you now need to be signed in to view yeahs for whatever reason
+* new admin actions and filters have been added to enhance the admin panel
+* my data page
+* probably far more
+
+
+migration process:
+	* import django_migrations.sql
+	* run python3 manage.py migrate closedverse_main

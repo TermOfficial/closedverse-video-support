@@ -1,4 +1,4 @@
-{% load closedverse_tags %}<div id="{{ post.unique_id }}" {% if post.spoils and not post.is_mine %}data-href-hidden{% else %}data-href{% endif %}="{% url "main:post-view" post.id %}" class="post trigger{% if post.screenshot %} with-image{% endif %}{% if post.spoils and not post.is_mine %} hidden test-hidden{% endif %}" tabindex="0">
+{% load closedverse_tags %}<div id="{{ post.unique_id }}" {% if post.spoils and not post.is_mine or not post.creator.is_active %}data-href-hidden{% else %}data-href{% endif %}="{% url "main:post-view" post.id %}" class="post trigger{% if post.screenshot %} with-image{% endif %}{% if post.spoils and not post.is_mine or not post.creator.is_active %} hidden test-hidden{% endif %}" tabindex="0">
   
     <p class="community-container"><a {% if post.community.clickable %}href="{% url "main:community-view" post.community_id %}"{% endif %}><img src="{{ post.community.icon }}" class="community-icon">{{ post.community.name }}</a></p>
 
@@ -38,15 +38,22 @@
 				<p class="post-content-text">{{ post.body|truncatechars:100|linebreaksbr }}</p>
 				{% endif %}
 			{% endif %}
-			{% if post.spoils and not post.is_mine %}
+			{% if post.spoils and not post.is_mine and post.creator.is_active %}
 			<div class="hidden-content"><p>This post contains spoilers.
                 <button type="button" class="hidden-content-button">View Post</button>
+          </p></div>
+			{% endif %}
+			{% if not post.creator.is_active %}
+			<div class="hidden-content"><p>Content hidden because its creator was banned. </p>
+			{% if post.creator.get_warned_reason %}
+			<p>Reason: {{post.creator.get_warned_reason}}
+			{% endif %}
+                <button type="button" class="hidden-content-button">View Anyway</button>
           </p></div>
 			{% endif %}
         <div class="post-meta">
 		  <button type="button"{% if not post.can_yeah %} disabled{% endif %} class="symbol submit yeah-button
 		  {% if post.has_yeah %}empathy-added{% endif %}
-		  {% if not post.can_yeah %}disabled{% endif %}
 		  " data-feeling="" data-action="{% url "main:post-add-yeah" post.id %}" data-community-id="{{ post.community.unique_id }}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
           {% if post.url %}
 		  <a class="link-confirm symbol button" href="{{ post.url }}"></a>

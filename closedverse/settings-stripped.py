@@ -18,14 +18,44 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "superSecretKey"
+# SECURITY WARNING: keep the secret key used in production secret! (If you want a website that can generate key https://miniwebtool.com/django-secret-key-generator/ goto here.)
+SECRET_KEY = ''
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = []
+# This is just a default value for testing
+# Do not include 127.0.0.1 or localhost
+# in production for security reasons.
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'closedverse.termy.lol',
+]
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+STATIC_URL = 'https://cimages.termy.lol/'
+#STATIC_URL = '/s/'
+MEDIA_URL = 'https://cmedia.termy.lol/'
+#MEDIA_URL = '/media/'
+CLOSEDVERSE_PROD = True
+
+memo_title = 'Closedverse'
+memo_msg = """
+<h2>Who?</h2>
+this time by term greabaegrjlesnjtsrtlj
+<h2>OMFG stop it with the clones</h2>
+no
+<h2>can i hack this please</h2>
+please do not
+<h2>what about closedverse-le</h2>
+its REALLLLY buggy but if you want to see it on the off chance it hasnt shit itself yet <a href="https://testyy.termy.lol">here</a>
+<h2>thank you for this</h2>
+you're not welcome this shouldnt exist in the first place
+<h2>Shouldn't you be working on rverse?</h2>
+dont have access to the computer that i use to work on it lol sorry
+"""
+IMAGE_DELETE_SETTING = 2
 
 # Application definition
 
@@ -39,18 +69,25 @@ INSTALLED_APPS = [
     
     'markdown_deux',
     'closedverse_main',
+    #'ban',
+    #'maintenance',
 ]
+X_FRAME_OPTIONS='SAMEORIGIN'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'xff.middleware.XForwardedForMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
+    #'ban.middleware.BanManagement',
     'closedverse_main.middleware.ClosedMiddleware',
+    #'maintenance.middleware.MaintenanceManagement',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = 'closedverse.urls'
@@ -83,11 +120,38 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'OPTIONS': {
             'read_default_file': '/home/ubuntu/closedverse/my.cnf',
-	}
+        }
+    }
+}"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'closedverse.sqlite3'),
     }
 }
+
+
 """
-DATABASES = None
+# log errors.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/errors.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
+"""
 
 
 # Password validation
@@ -127,12 +191,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-STATIC_URL = 'https://cimages.termy.lol/'
+#STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Define static files in the base directory
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/'),
-]
+#STATICFILES_DIRS = [
+#    os.path.join(BASE_DIR, 'static/'),
+#]
 
 # Closedverse models and routes for Django
 AUTH_USER_MODEL = 'closedverse_main.User'
@@ -141,7 +207,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/login/'
 
 # User-uploaded media paths for Closedverse
-MEDIA_URL = 'https://cmedia.termy.lol/'
+#MEDIA_URL = '/media/'
 # Must end with a trailing slash
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
@@ -155,12 +221,6 @@ MARKDOWN_DEUX_STYLES = {
         'safe_mode': 'escape',
     },
 }
-# Settings unique to Closedverse
-
-# This option enables some production-specific pages
-# and routines, such as HTTPS scheme redirection and
-# proxy detection via IPHub.
-CLOSEDVERSE_PROD = True
 
 # Initialize version and Git URL
 CLOSEDVERSE_GIT_VERSION = 'unknown'
@@ -188,18 +248,17 @@ if os.path.isdir(os.path.join(BASE_DIR, '.git')):
     else:
         CLOSEDVERSE_GIT_URL = git_url_without_ext + '/commit/' + CLOSEDVERSE_GIT_VERSION
 
-CLOSDEVERSE_PROD = True
 # Google reCAPTCHA (v2) settings
 # This feature won't work if these fields are not populated.
 RECAPTCHA_PUBLIC_KEY = None
 RECAPTCHA_PRIVATE_KEY = None
 
 # Key for IPHub service for Closedverse, which detects proxies.
-IPHUB_KEY = ""
+IPHUB_KEY = None
 # If this is set to True, then users will receive an error
 # upon trying to sign up for the site behind a proxy.
 # Uses IPHub service and requires an API key defined above.
-DISALLOW_PROXY = True
+DISALLOW_PROXY = False
 
 # Setting this to True forces every user to log in/
 # sign up for the site to view any content.
@@ -219,7 +278,49 @@ LOGIN_EXEMPT_URLS = {
 # Action to perform on images belonging to posts/
 # comments when they are deleted
 # 0: keep, 1: move to 'rm' folder, 2: delete
-IMAGE_DELETE_SETTING = 0
+IMAGE_DELETE_SETTING = 2
 
 # List of NNIDs that aren't allowed to be used on the site.
-NNID_FORBIDDEN_LIST = os.path.join(BASE_DIR, 'forbidden.json')
+#NNID_FORBIDDEN_LIST = os.path.join(BASE_DIR, 'forbidden.json')
+
+# allow sign ups.
+allow_signups = True
+
+# Minimum level required to view IP addresses and user agents. (default: 10)
+# Mods under this level will still be able to manage users, however will not be able to view any sensitive data.
+min_lvl_metadata_perms = 10
+
+# file size limits in megabytes! only applies when using the community tools.
+max_icon_size = .5
+max_banner_size = 1
+
+# The minimum length required for a user's password. This is to save the users from themselves in the event of a data breach. The longer and more complex the password is, the harder it is to be cracked. (default: 7)
+# This will definitely miss a few people off who just want to sign up without worrying about long passwords.
+minimum_password_length = 7
+
+# The hard limit for uploading, Will cause an error if this is exceeded. This is set to 15MB by default (15728640)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
+
+# Set the default theme here! Set this to None to use the normal Closedverse theme.
+# TODO, make this work for users who aren't logged in.
+site_wide_theme_hex = "#ff00cd"
+
+# Option to delete image if it's local
+# 0 - keep, 1 - move to 'rm' folder, 2 - DELETE
+image_delete_opt = 0
+
+# age (minimal 13 due to C.O.P.P.A)
+age_allowed = "16"
+
+# This option enables some production-specific pages
+# and routines, such as HTTPS scheme redirection and
+# proxy detection via IPHub.
+CLOSEDVERSE_PROD = True
+
+XFF_TRUSTED_PROXY_DEPTH = 1
+XFF_STRICT = True
+XFF_NO_SPOOFING = True
+XFF_ALWAYS_PROXY = True
+XFF_HEADER_REQUIRED = True
+
+TIME_ZONE = 'EST'

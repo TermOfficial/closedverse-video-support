@@ -22,6 +22,11 @@
 		<p>probably <a href="/users/Terminal">me</a> but it could be someone else if somebody comes to work on this</p>
 		<h2>closedverse-le? beta closedverse?</h2>
 		<p>rewrite of closedverse arian did in speedy node.js which was never finished</p>
+		{% if request.user.is_authenticated %}
+		<div class="center center-input">
+			<button class="button" data-href="{% url "main:my-data" %}">View your data</button>
+		</div>
+		{% endif %}
       </div>
     </div>
   </div>

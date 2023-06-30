@@ -1,0 +1,15 @@
+# may be incomplete
+django==3.2.19
+django-admin-interface
+django-colorfield
+whitenoise
+
+# from closedverse repo:
+django-markdown-deux
+bcrypt
+
+# from rixy message
+urllib3
+passlib
+pillow
+django-markdown2

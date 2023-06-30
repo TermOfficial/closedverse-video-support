@@ -15,7 +15,7 @@
 {% for community in communities %}
 <li id="{{ community }}" class="trigger test-community-list-item " data-href="{% url "main:community-view" community.id %}" tabindex="0">
 	{% if community.banner %}
-		<img src="{{ community.banner }}" class="community-list-cover">
+		<img src="{{ community.banner.url }}" class="community-list-cover">
 	{% endif %}
   <div class="community-list-body">
   <span class="icon-container"><img src="{{ community.icon }}" class="icon"></span>

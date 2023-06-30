@@ -1,4 +1,5 @@
 from django import template
+from closedverse_main.models import Ads
 register = template.Library()
 
 @register.inclusion_tag('closedverse_main/elements/user-sidebar.html')
@@ -7,8 +8,15 @@ def user_sidebar(request, user, profile, selection=0, general=False, fr=None):
 	if user.is_authenticated:
 		user.is_following = user.is_following(request.user)
 		user.is_me = user.is_me(request)
+	availableads = Ads.ads_available()
+	if (availableads):
+		ad = Ads.get_one()
+	else:
+		ad = "no ads"
 	return {
 		'request': request,
+		'availableads': availableads,
+		'ad': ad,
 		'user': user,
 		'profile': profile,
 		'selection': selection,

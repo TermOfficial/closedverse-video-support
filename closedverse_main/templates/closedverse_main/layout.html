@@ -27,6 +27,74 @@
 	<link id="darkness" {% if request.session.lights %}disabled {% endif %}rel="stylesheet" type="text/css" href="{% static "blueness.css" %}">
 	<script src="{% static "jslibs.js" %}"></script>
     <script src="{% static "closedverse.js" %}"></script>
+		{% if request.user.ColorTheme %}<script>
+  var mainColor = "{{ request.user.ColorTheme }}";
+  var darkColor;
+  var slightlyDarkColor;
+  var darkerColor;
+  var lightColor;
+
+  function changeThemeColor() {
+	if(mainColor === 'ff00cd') return;
+    // Convert hex to RGB
+    var rgb = hexToRgb(mainColor);
+    var mainColorR = rgb[0];
+    var mainColorG = rgb[1];
+    var mainColorB = rgb[2];
+
+    // Calculate light color
+    var lightColorR = mainColorR > 85 ? mainColorR * 2 : mainColorR + 175;
+    lightColorR = lightColorR > 255 ? 255 : lightColorR;
+    var lightColorG = mainColorG > 85 ? mainColorG * 2 : mainColorG + 175;
+    lightColorG = lightColorG > 255 ? 255 : lightColorG;
+    var lightColorB = mainColorB > 85 ? mainColorB * 2 : mainColorB + 175;
+    lightColorB = lightColorB > 255 ? 255 : lightColorB;
+
+    // Calculate dark colors
+    darkColor = rgb2hex(mainColorR / 4, mainColorG / 4, mainColorB / 4);
+    lightColor = rgb2hex(lightColorR, lightColorG, lightColorB);
+    slightlyDarkColor = rgb2hex(mainColorR / 1.4, mainColorG / 1.4, mainColorB / 1.4);
+    darkerColor = rgb2hex(mainColorR / 8, mainColorG / 8, mainColorB / 8);
+
+    // Set CSS variables
+    document.documentElement.style.setProperty("--theme", `rgb(${mainColorR}, ${mainColorG}, ${mainColorB})`);
+    document.documentElement.style.setProperty("--theme-dark", darkColor);
+    document.documentElement.style.setProperty("--theme-slightly-dark", slightlyDarkColor);
+    document.documentElement.style.setProperty("--theme-darker", darkerColor);
+    document.documentElement.style.setProperty("--theme-light", lightColor);
+	{% if not request.user.bg_url %}document.documentElement.style.setProperty("--background", "url('img/indigo-pattern.png')");{% endif %}
+  }
+
+  // hex -> rgb
+  function hexToRgb(hex) {
+    var bigint = parseInt(hex, 16);
+    var mainColorR = (bigint >> 16) & 255;
+    var mainColorG = (bigint >> 8) & 255;
+    var mainColorB = bigint & 255;
+    return [mainColorR, mainColorG, mainColorB];
+  }
+
+  // rgb -> hex
+  function rgb2hex(red, green, blue) {
+    var rgb = blue | (green << 8) | (red << 16);
+    return "#" + (0x1000000 + rgb).toString(16).slice(1)
+  }
+
+  function toDefault() {
+    document.documentElement.style.setProperty("--theme", "initial");
+    document.documentElement.style.setProperty("--theme-dark", "initial");
+    document.documentElement.style.setProperty("--theme-slightly-dark", "initial");
+    document.documentElement.style.setProperty("--theme-darker", "initial");
+    document.documentElement.style.setProperty("--theme-light", "initial");
+  }
+
+  changeThemeColor();
+        </script>{% endif %}
+		<style>
+			:root {
+			{% if request.user.bg_url %}--background: url({{ request.user.bg_url }});{% endif %}
+			}
+		</style>
   </head>
 
   <body class=""{% if request.user.is_authenticated %}
