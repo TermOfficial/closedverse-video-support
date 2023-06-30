@@ -19,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret! (If you want a website that can generate key https://miniwebtool.com/django-secret-key-generator/ goto here.)
-SECRET_KEY = 'sextest'
+SECRET_KEY = ''
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -34,9 +34,10 @@ ALLOWED_HOSTS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-#STATIC_URL = 'https://cimages.termy.lol/'
-STATIC_URL = '/s/'
-#MEDIA_URL = 'https://cmedia.termy.lol/'
+STATIC_URL = 'https://cimages.termy.lol/'
+#STATIC_URL = '/s/'
+MEDIA_URL = 'https://cmedia.termy.lol/'
+#MEDIA_URL = '/media/'
 CLOSEDVERSE_PROD = True
 
 memo_title = 'Closedverse'
@@ -76,7 +77,7 @@ X_FRAME_OPTIONS='SAMEORIGIN'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    #'xff.middleware.XForwardedForMiddleware',
+    'xff.middleware.XForwardedForMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -113,22 +114,22 @@ WSGI_APPLICATION = 'closedverse.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'indigo4',
-	'USER': 'indigo',
-	'PASSWORD': 'indigo',
+        'OPTIONS': {
+            'read_default_file': '/home/ubuntu/closedverse/my.cnf',
+        }
     }
-}
-"""DATABASES = {
+}"""
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'closedverse.sqlite3'),
     }
 }
-"""
+
 
 """
 # log errors.
@@ -191,13 +192,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 #STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 's/')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Define static files in the base directory
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/'),
-]
+#STATICFILES_DIRS = [
+#    os.path.join(BASE_DIR, 'static/'),
+#]
 
 # Closedverse models and routes for Django
 AUTH_USER_MODEL = 'closedverse_main.User'
@@ -206,7 +207,7 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/login/'
 
 # User-uploaded media paths for Closedverse
-MEDIA_URL = '/media/'
+#MEDIA_URL = '/media/'
 # Must end with a trailing slash
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 

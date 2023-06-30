@@ -62,7 +62,7 @@
     document.documentElement.style.setProperty("--theme-slightly-dark", slightlyDarkColor);
     document.documentElement.style.setProperty("--theme-darker", darkerColor);
     document.documentElement.style.setProperty("--theme-light", lightColor);
-	document.documentElement.style.setProperty("--background", "url('img/indigo-pattern.png')");
+	{% if not request.user.bg_url %}document.documentElement.style.setProperty("--background", "url('img/indigo-pattern.png')");{% endif %}
   }
 
   // hex -> rgb
