@@ -1,5 +1,5 @@
 # closedverse-video-support
-so its closedverse, but with video mp4 support (please merge arian)
+so its closedverse, but with video mp4 support and all the features from the other closedverse clones merged into one (thanks arian)
 
 # Requirements
   * Python 3.6.2?
