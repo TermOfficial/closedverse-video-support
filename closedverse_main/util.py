@@ -97,15 +97,15 @@ def video_upload(video, stream=False):
 			return settings.MEDIA_URL + str(randnum) + ".mp4"
 		else:
 			return settings.MEDIA_URL + str(randnum) + ".mp4"
-	elif extension == '.mov':
-		fname = settings.MEDIA_ROOT + str(randnum) + ".mov"
+	if extension == '.webm':
+		fname = settings.MEDIA_ROOT + str(randnum) + ".webm"
 		if not os.path.exists(settings.MEDIA_ROOT + fname):
 			with open(fname, "wb+") as destination:
 				for chunk in video.chunks():
 					destination.write(chunk)
-			return settings.MEDIA_URL + str(randnum) + ".mov"
+			return settings.MEDIA_URL + str(randnum) + ".webm"
 		else:
-			return settings.MEDIA_URL + str(randnum) + ".mov"
+			return settings.MEDIA_URL + str(randnum) + ".webm"
 	else:
 		return 1
 
