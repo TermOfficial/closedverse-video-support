@@ -1056,7 +1056,8 @@ def post_create(request, community):
 			6: "Not allowed.",
 			7: "Please don't spam.",
 			9: "You're very funny. Unfortunately your funniness blah blah blah fuck off.",
-			10: "No mr white, you can't make a post entirely consistant of spaces"
+			10: "No mr white, you can't make a post entirely consistant of spaces",
+			11: "The video you've uploaded is invalid." 
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
