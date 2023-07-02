@@ -97,7 +97,7 @@ def video_upload(video, stream=False):
 			return settings.MEDIA_URL + str(randnum) + ".mp4"
 		else:
 			return settings.MEDIA_URL + str(randnum) + ".mp4"
-	if extension == '.webm':
+	elif extension == '.webm':
 		fname = settings.MEDIA_ROOT + str(randnum) + ".webm"
 		if not os.path.exists(settings.MEDIA_ROOT + fname):
 			with open(fname, "wb+") as destination:
