@@ -29,32 +29,20 @@ DEBUG = True
 # in production for security reasons.
 ALLOWED_HOSTS = [
     '127.0.0.1',
-    'closedverse.termy.lol',
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-STATIC_URL = 'https://cimages.termy.lol/'
-#STATIC_URL = '/s/'
-MEDIA_URL = 'https://cmedia.termy.lol/'
-#MEDIA_URL = '/media/'
+STATIC_URL = '/s/'
+MEDIA_URL = '/media/'
 CLOSEDVERSE_PROD = True
 
-memo_title = 'Closedverse'
+memo_title = 'closedverse-video-support'
 memo_msg = """
-<h2>Who?</h2>
-this time by term greabaegrjlesnjtsrtlj
-<h2>OMFG stop it with the clones</h2>
-no
-<h2>can i hack this please</h2>
-please do not
-<h2>what about closedverse-le</h2>
-its REALLLLY buggy but if you want to see it on the off chance it hasnt shit itself yet <a href="https://testyy.termy.lol">here</a>
-<h2>thank you for this</h2>
-you're not welcome this shouldnt exist in the first place
-<h2>Shouldn't you be working on rverse?</h2>
-dont have access to the computer that i use to work on it lol sorry
-"""
+<h2>basically the clusterfuck of all closedverse clones</h2>
+<p>i don't know what i'm doing</p>
+<h2>Why is this person rehosting it?</h2>
+<p>the world may never know</p>"""
 IMAGE_DELETE_SETTING = 2
 
 # Application definition
@@ -114,15 +102,6 @@ WSGI_APPLICATION = 'closedverse.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': '/home/ubuntu/closedverse/my.cnf',
-        }
-    }
-}"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
