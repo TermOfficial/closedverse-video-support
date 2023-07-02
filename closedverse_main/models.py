@@ -337,9 +337,9 @@ class User(models.Model):
 	# Okay so this returns True if the user's online, 2 if they're AFK, False if they're offline and None if they hide it
 		if self.hide_online:
 			return None
-		if (timezone.now() - timedelta(seconds=50)) > self.last_login:
+		if (timezone.now() - timedelta(seconds=80)) > self.last_login:
 			return False
-		elif (timezone.now() - timedelta(seconds=48)) > self.last_login:
+		elif (timezone.now() - timedelta(seconds=50)) > self.last_login:
 			return 2
 		else:
 			return True
@@ -773,9 +773,8 @@ class Community(models.Model):
 		if request.FILES.get('video'):
 			video = util.video_upload(request.FILES['video'])
 			if video == 1:
-				return 7
-			if video == 2:
-				return 8
+				return 11
+			return video
 		if request.POST.get('_post_type') == 'painting':
 			if not request.POST.get('painting'):
 				return 2

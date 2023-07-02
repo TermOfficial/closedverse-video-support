@@ -89,29 +89,23 @@ def video_upload(video, stream=False):
 	Str = video.name
 	extension = video.name[len(video.name) - 4:]
 	if extension == '.mp4':
-		if video._size > 5242880:
-			return 2
+		fname = settings.MEDIA_ROOT + str(randnum) + ".mp4"
+		if not os.path.exists(settings.MEDIA_ROOT + fname):
+			with open(fname, "wb+") as destination:
+				for chunk in video.chunks():
+					destination.write(chunk)
+			return settings.MEDIA_URL + str(randnum) + ".mp4"
 		else:
-			fname = settings.MEDIA_ROOT + str(randnum) + ".mp4"
-			if not os.path.exists(settings.MEDIA_ROOT + fname):
-				with open(fname, "wb+") as destination:
-					for chunk in video.chunks():
-						destination.write(chunk)
-				return settings.MEDIA_URL + str(randnum) + ".mp4"
-			else:
-				return settings.MEDIA_URL + str(randnum) + ".mp4"
+			return settings.MEDIA_URL + str(randnum) + ".mp4"
 	elif extension == '.mov':
-		if video._size > 5242880:
-			return 2
+		fname = settings.MEDIA_ROOT + str(randnum) + ".mov"
+		if not os.path.exists(settings.MEDIA_ROOT + fname):
+			with open(fname, "wb+") as destination:
+				for chunk in video.chunks():
+					destination.write(chunk)
+			return settings.MEDIA_URL + str(randnum) + ".mov"
 		else:
-			fname = settings.MEDIA_ROOT + str(randnum) + ".mov"
-			if not os.path.exists(settings.MEDIA_ROOT + fname):
-				with open(fname, "wb+") as destination:
-					for chunk in video.chunks():
-						destination.write(chunk)
-				return settings.MEDIA_URL + str(randnum) + ".mov"
-			else:
-				return settings.MEDIA_URL + str(randnum) + ".mov"
+			return settings.MEDIA_URL + str(randnum) + ".mov"
 	else:
 		return 1
 

@@ -84,8 +84,9 @@ def recaptcha_verify(request, key):
 		return False
 	return True
 
-def "{{ ad.imageurl.url }}" width="270" height="240"(video, stream=False):
+def videya(video, stream=False):
 	"""
+	why the fuck is there a duplicate here
 	randnum = random.randint(10000, 99999)
 	name, extension = os.path.splitext(video.name)
 	fname = settings.MEDIA_ROOT + str(randnum) + ".mp4"
