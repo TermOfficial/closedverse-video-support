@@ -86,7 +86,6 @@ def recaptcha_verify(request, key):
 
 def video_upload(video, stream=False):
 	randnum = random.randint(10000, 99999)
-	# only either webm or mp4
 	fname = str(randnum)
 	extension = video.name[-4:]
 	if extension == 'mp4':
