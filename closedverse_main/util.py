@@ -86,30 +86,6 @@ def recaptcha_verify(request, key):
 
 def video_upload(video, stream=False):
 	randnum = random.randint(10000, 99999)
-<<<<<<< HEAD
-	Str = video.name
-	extension = video.name[len(video.name) - 4:]
-	if extension == '.mp4':
-		fname = settings.MEDIA_ROOT + str(randnum) + ".mp4"
-		if not os.path.exists(settings.MEDIA_ROOT + fname):
-			with open(fname, "wb+") as destination:
-				for chunk in video.chunks():
-					destination.write(chunk)
-			return settings.MEDIA_URL + str(randnum) + ".mp4"
-		else:
-			return settings.MEDIA_URL + str(randnum) + ".mp4"
-	elif extension == '.webm':
-		fname = settings.MEDIA_ROOT + str(randnum) + ".webm"
-		if not os.path.exists(settings.MEDIA_ROOT + fname):
-			with open(fname, "wb+") as destination:
-				for chunk in video.chunks():
-					destination.write(chunk)
-			return settings.MEDIA_URL + str(randnum) + ".webm"
-		else:
-			return settings.MEDIA_URL + str(randnum) + ".webm"
-	else:
-		return 1
-=======
 	# only either webm or mp4
 	fname = str(randnum)
 	extension = video.name[-4:]
@@ -125,7 +101,6 @@ def video_upload(video, stream=False):
 		for chunk in video.chunks():
 			destination.write(chunk)
 	return settings.MEDIA_URL + fname
->>>>>>> a5d5fa6bc6889a1d8b00f8d6962dc1227bbbefe4
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 def image_upload(img, stream=False, drawing=False):
