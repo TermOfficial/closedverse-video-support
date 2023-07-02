@@ -339,7 +339,7 @@ class User(models.Model):
 			return None
 		if (timezone.now() - timedelta(seconds=80)) > self.last_login:
 			return False
-		elif (timezone.now() - timedelta(seconds=50)) > self.last_login:
+		elif (timezone.now() - timedelta(seconds=50)) > self.last_login: #
 			return 2
 		else:
 			return True
