@@ -773,7 +773,9 @@ class Community(models.Model):
 		if request.FILES.get('video'):
 			video = util.video_upload(request.FILES['video'])
 			if video == 1:
-				return 2
+				return 7
+			if video == 2:
+				return 8
 		if request.POST.get('_post_type') == 'painting':
 			if not request.POST.get('painting'):
 				return 2

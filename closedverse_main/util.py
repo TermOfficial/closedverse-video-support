@@ -86,15 +86,22 @@ def recaptcha_verify(request, key):
 
 def video_upload(video, stream=False):
 	randnum = random.randint(10000, 99999)
-	name, extension = os.path.splitext(video.name)
-	fname = settings.MEDIA_ROOT + str(randnum) + ".mp4"
-	if not os.path.exists(settings.MEDIA_ROOT + fname):
-		with open(fname, "wb+") as destination:
-			for chunk in video.chunks():
-				destination.write(chunk)
-		return settings.MEDIA_URL + str(randnum) + ".mp4"
+	Str = video.name
+	extension = video.name[len(video.name) - 4:]
+	if extension == '.mp4':
+		if video._size > 5242880:
+			return 2
+		else:
+			fname = settings.MEDIA_ROOT + str(randnum) + ".mp4"
+			if not os.path.exists(settings.MEDIA_ROOT + fname):
+				with open(fname, "wb+") as destination:
+					for chunk in video.chunks():
+						destination.write(chunk)
+				return settings.MEDIA_URL + str(randnum) + ".mp4"
+			else:
+				return settings.MEDIA_URL + str(randnum) + ".mp4"
 	else:
-		return settings.MEDIA_URL + str(randnum) + ".mp4"
+		return 1
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 def image_upload(img, stream=False, drawing=False):
