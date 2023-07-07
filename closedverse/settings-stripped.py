@@ -278,7 +278,7 @@ max_banner_size = 1
 minimum_password_length = 7
 
 # The hard limit for uploading, Will cause an error if this is exceeded. This is set to 15MB by default (15728640)
-DATA_UPLOAD_MAX_MEMORY_SIZE = 15728640
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
 
 # Set the default theme here! Set this to None to use the normal Closedverse theme.
 # TODO, make this work for users who aren't logged in.
