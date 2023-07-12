@@ -1315,7 +1315,7 @@ span.owner-label {
 .icon-container.jack:after {
   content: url("img/jack.png");
 }
-.icon-container.verified:after {
+.icon-container.verifiedd:after {
   content: url("img/verified.png");
 }
 
@@ -1459,7 +1459,7 @@ span.owner-label {
   width: 22px;
   height: 22px;
 }
-.post-permalink-feeling-icon.verified:after {
+.post-permalink-feeling-icon.verifiedd:after {
   content: url("img/verified.png");
   position: absolute;
   display: block;
@@ -7585,10 +7585,10 @@ margin: 10px 0px 15px !important;
     width: 17px;
     height: 17px;
   }
-  #empathy-content .icon-container.verified:after,
-  #reply-content .icon-container.verified:after,
-  .news-list .icon-container.verified:after {
-    content: url(img/verified.png);
+  #empathy-content .icon-container.verifiedd:after,
+  #reply-content .icon-container.verifiedd:after,
+  .news-list .icon-container.verifiedd:after {
+    content: url(img/.png);
     width: 17px;
     height: 17px;
   }

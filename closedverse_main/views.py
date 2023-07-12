@@ -270,6 +270,9 @@ def signup_page(request):
 				return HttpResponseForbidden("That username isn't funny. Please pick a funny username.")
 			if keyword in request.POST['nickname'].lower():
 				return HttpResponseForbidden("That nickname isn't funny. Please pick a funny nickname.")
+		for keyword in ['alen', 'Alen', 'noobyman', 'Noobyman']:
+			if keyword in request.POST['nickname'].lower():
+				return HttpRequestForbidden("stop it, alen.")
 		for keyword in ['adam']:
 			if keyword in request.POST['username'].lower():
 				return HttpResponseForbidden("Adam, no.")

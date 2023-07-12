@@ -269,7 +269,7 @@ class User(models.Model):
 			8: 'developer',
 			9: 'badgedes',
 			10: 'jack',
-			11: 'verified',
+			11: 'verifiedd',
 			}.get(self.role, '')
 			second = {
 			1: "Bot",
@@ -279,7 +279,7 @@ class User(models.Model):
 			5: "Donator",
 			6: "Cool Person",
 			7: "cave story is okay",
-			8: "python may be annoying but its fun to check out -terminal",
+			8: "owner guy",
 			9: "Badge Designer",
 			10: "stupid man",
 			11: "Verified",
@@ -375,12 +375,12 @@ class User(models.Model):
 	def num_friends(self):
 		return self.friend_source.filter().count() + self.friend_target.filter().count()
 	def can_follow(self, user):
-		#if UserBlock.find_block(self, user):
-		#	return False
+		if UserBlock.find_block(self, user):
+			return False
 		return True
 	def can_view(self, user):
-		#if UserBlock.find_block(self, user, full=True):
-		#	return False
+		if UserBlock.find_block(self, user, full=True):
+			return False
 		return True
 	def is_following(self, me):
 		if not me.is_authenticated:
@@ -877,8 +877,8 @@ class Post(models.Model):
 			return False
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
-			#if UserBlock.find_block(self.creator, request.user):
-			#	return False
+			if UserBlock.find_block(self.creator, request.user):
+				return False
 			return not self.is_mine(request.user)
 			# why did cedar-django do this? god knows
 			#return True
@@ -911,8 +911,8 @@ class Post(models.Model):
 		# TODO: Make this so that if a post's comments exceeds 100, make the user able to close the comments section
 		if self.number_comments() > 500:
 			return False
-		#if UserBlock.find_block(self.creator, request.user):
-		#	return False
+		if UserBlock.find_block(self.creator, request.user):
+			return False
 		return True
 	def get_comments(self, request=None, limit=0, offset=0):
 		if request.user.is_authenticated:
@@ -1095,8 +1095,8 @@ class Comment(models.Model):
 		if request.user.is_authenticated:
 			return not self.is_mine(request.user)
 			#return True
-		#if UserBlock.find_block(self.creator, request.user):
-		#	return False
+		if UserBlock.find_block(self.creator, request.user):
+			return False
 		else:
 			return False
 	def can_rm(self, request):
@@ -1258,8 +1258,8 @@ class Profile(models.Model):
 	def can_friend(self, user=None):
 		if self.let_friendrequest == 2:
 			return False
-		#if user.is_authenticated and UserBlock.find_block(self.user, user):
-		#	return False
+		if user.is_authenticated and UserBlock.find_block(self.user, user):
+			return False
 		elif self.let_friendrequest == 1:
 			if not user.is_following(self.user):
 				return False
@@ -1690,6 +1690,9 @@ class UserBlock(models.Model):
 		if full:
 			return UserBlock.objects.filter(Q(source=first, full=True) & Q(target=second, full=True) | Q(target=first, full=True) & Q(source=second, full=True)).exists()
 		return UserBlock.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).exists()
+
+	def make_block(first, second):
+		return ""
 
 class AuditLog(models.Model):
 	id = models.AutoField(primary_key=True)
