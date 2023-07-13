@@ -9522,6 +9522,7 @@ See http://bgrins.github.io/spectrum/themes/ for instructions.
   background-color: #fffce4;
 }
 .close-announce-link:before {
+  font-family: "MiiverseSymbols";
   font-size: 14px;
   content: 'A';
   color: #FF9100;

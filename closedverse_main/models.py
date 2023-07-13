@@ -886,6 +886,11 @@ class Post(models.Model):
 			#return True
 		else:
 			return False
+	def is_blocked(self, request):
+		if request.user.is_authenticated:
+			if UserBlock.find_block(self.creator, request.user):
+				return False
+		return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True
@@ -1103,6 +1108,11 @@ class Comment(models.Model):
 				return False
 		else:
 			return False
+	def is_blocked(self, request):
+		if request.user.is_authenticated:
+			if UserBlock.find_block(self.creator, request.user):
+				return False
+		return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True

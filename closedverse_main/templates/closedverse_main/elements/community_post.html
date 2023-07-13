@@ -56,7 +56,7 @@
                 <button type="button" class="hidden-content-button">View Anyway</button>
           </p></div>
 		{% endif %}
-		{% if blocked and post.creator.is_active %}
+		{% if post.user_blocked %}
 			<div class="hidden-content"><p>Content hidden because you've blocked this user.</p>
                 <button type="button" class="hidden-content-button">View Anyway</button>
           </p></div>
@@ -71,6 +71,7 @@
           <div class="empathy symbol"><span class="symbol-label">Yeahs</span><span class="empathy-count">{{ post.number_yeahs }}</span></div>
 		  {% if not post.original_post %}
           <div class="reply symbol"><span class="symbol-label">Comments</span><span class="reply-count">{{ post.number_comments }}</span></div>
+		  <script>console.log("{{ post.user_blocked }} - {{ post.creator.username }}");</script>
 		  {% endif %}
 		</div>
 {% if post.recent_comment and post.recent_comment.creator.is_active %}
