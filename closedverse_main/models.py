@@ -375,12 +375,14 @@ class User(models.Model):
 	def num_friends(self):
 		return self.friend_source.filter().count() + self.friend_target.filter().count()
 	def can_follow(self, user):
-		if UserBlock.find_block(self, user):
-			return False
+		if user.is_authenticated:
+			if UserBlock.find_block(self, user):
+				return False
 		return True
 	def can_view(self, user):
-		if UserBlock.find_block(self, user, full=True):
-			return False
+		if user.is_authenticated:
+			if UserBlock.find_block(self, user, full=True):
+				return False
 		return True
 	def is_following(self, me):
 		if not me.is_authenticated:
@@ -911,8 +913,9 @@ class Post(models.Model):
 		# TODO: Make this so that if a post's comments exceeds 100, make the user able to close the comments section
 		if self.number_comments() > 500:
 			return False
-		if UserBlock.find_block(self.creator, request.user):
-			return False
+		if request.user.is_authenticated:
+			if UserBlock.find_block(self.creator, request.user):
+				return False
 		return True
 	def get_comments(self, request=None, limit=0, offset=0):
 		if request.user.is_authenticated:
@@ -1095,8 +1098,9 @@ class Comment(models.Model):
 		if request.user.is_authenticated:
 			return not self.is_mine(request.user)
 			#return True
-		if UserBlock.find_block(self.creator, request.user):
-			return False
+		if request.user.is_authenticated:
+			if UserBlock.find_block(self.creator, request.user):
+				return False
 		else:
 			return False
 	def can_rm(self, request):

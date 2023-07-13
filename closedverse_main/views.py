@@ -1082,6 +1082,9 @@ def post_view(request, post):
 		raise Http404()
 	if not request.user.is_authenticated and post.community.require_auth:
 		raise Http404()
+	blocked = False
+	if request.user.is_authenticated and UserBlock.find_block(post.creator, request.user):
+		blocked = True
 	post.setup(request)
 	if post.poll:
 		post.poll.setup(request.user)
@@ -1111,6 +1114,7 @@ def post_view(request, post):
 				'date': str(post.created),
 				'image': post.creator.do_avatar(post.feeling),
 			},
+		'blocked': blocked,
 	})
 @require_http_methods(['POST'])
 @login_required
