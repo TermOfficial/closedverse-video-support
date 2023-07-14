@@ -424,6 +424,12 @@ class User(models.Model):
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
+					post.body = post.body.replace(":skull:", "💀")
+					post.body = post.body.replace(":sob:", "😭")
+					post.body = post.body.replace(":100:", "💯")
+					post.body = post.body.replace(":joy:", "😂")
+					post.body = post.body.replace(":scream:", "😱")
+					#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 		return posts
 	def get_comments(self, limit=50, offset=0, request=None):
 		if request.user.is_authenticated:
@@ -434,6 +440,12 @@ class User(models.Model):
 		if request:
 				for post in posts:
 					post.setup(request)
+					post.body = post.body.replace(":skull:", "💀")
+					post.body = post.body.replace(":sob:", "😭")
+					post.body = post.body.replace(":100:", "💯")
+					post.body = post.body.replace(":joy:", "😂")
+					post.body = post.body.replace(":scream:", "😱")
+					#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 		return posts
 	def get_yeahed(self, type=0, limit=20, offset=0):
 		# 0 - post, 1 - comment, 2 - any
@@ -714,6 +726,12 @@ class Community(models.Model):
 		if request:
 			for post in posts:
 				post.setup(request)
+				post.body = post.body.replace(":skull:", "💀")
+				post.body = post.body.replace(":sob:", "😭")
+				post.body = post.body.replace(":100:", "💯")
+				post.body = post.body.replace(":joy:", "😂")
+				post.body = post.body.replace(":scream:", "😱")
+				#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 				post.recent_comment = post.recent_comment()
 		return posts
 	def post_perm(self, request):
@@ -886,11 +904,13 @@ class Post(models.Model):
 			#return True
 		else:
 			return False
-	def is_blocked(self, request):
-		if request.user.is_authenticated:
-			if UserBlock.find_block(self.creator, request.user):
-				return False
-		return True
+	def user_is_blocked(self, user):
+		if user == self.user:
+			return False
+		if not user.is_authenticated:
+			return False
+		if user.is_authenticated and UserBlock.find_block(self.user, user):
+			return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True
@@ -941,6 +961,12 @@ class Post(models.Model):
 		if request:
 			for post in comments:
 				post.setup(request)
+				post.body = post.body.replace(":skull:", "💀")
+				post.body = post.body.replace(":sob:", "😭")
+				post.body = post.body.replace(":100:", "💯")
+				post.body = post.body.replace(":joy:", "😂")
+				post.body = post.body.replace(":scream:", "😱")
+				#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 		return comments
 	def create_comment(self, request):
 		if not self.can_comment(request):
@@ -1108,11 +1134,13 @@ class Comment(models.Model):
 				return False
 		else:
 			return False
-	def is_blocked(self, request):
-		if request.user.is_authenticated:
-			if UserBlock.find_block(self.creator, request.user):
-				return False
-		return True
+	def user_is_blocked(self, user):
+		if user == self.creator:
+			return False
+		if not user.is_authenticated:
+			return False
+		if user.is_authenticated and UserBlock.find_block(self.user, user):
+			return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True
@@ -1172,6 +1200,7 @@ class Comment(models.Model):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
 		self.is_mine = self.is_mine(request.user)
+		self.blocked_user = True
 
 class Yeah(models.Model):
 	# Todo: make this a plain int at some point
@@ -1269,6 +1298,13 @@ class Profile(models.Model):
 				return False
 			return True
 		return True
+	def user_is_blocked(self, user):
+		if user == self.user:
+			return False
+		if not user.is_authenticated:
+			return False
+		if user.is_authenticated and UserBlock.find_block(self.user, user):
+			return True
 	def can_friend(self, user=None):
 		if self.let_friendrequest == 2:
 			return False

@@ -7,11 +7,13 @@
 		<form action="{% url "main:community-search" %}" class="search">
 			<input maxlength="32" name="query" placeholder="Search all communities" type="text"><input title="Search" type="submit" value="q">
 		</form>
+		<!--
 		<div class="close-announce-container">
 			<div class="close-announce-link">
-				<a class="title" href="/posts/944"><b>Closedverse is undergoing maintenance soon.</b></a>
+				<a class="title" id="close-text-ann" href="/posts/979"><b>Maintenance is over - New announcement about maintenance.</b></a>
 			</div>
 		</div>
+		-->
 		
 		{% if user.is_warned %}
 		<div class="notice" style="background-color: #ffc783;border: 1px solid #ffb358;">

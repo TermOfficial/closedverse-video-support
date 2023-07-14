@@ -209,10 +209,8 @@ def login_page(request):
 		"""
 		if settings.CLOSEDVERSE_PROD:
 			if iphub(request.META['REMOTE_ADDR']):
-				spamuser = True
 				if settings.DISALLOW_PROXY:
-					# This was for me, a server error will email admins of course.
-					raise ValueError
+					return HttpResponseNotFound("The user doesn't exist.")
 		"""
 		user = User.objects.authenticate(username=request.POST['username'], password=request.POST['password'])
 		# None = doesn't exist, False = invalid password.
@@ -318,7 +316,7 @@ def signup_page(request):
 		if iphub(request.META['REMOTE_ADDR']):
 			spamuser = True
 			if settings.DISALLOW_PROXY:
-				return HttpResponseBadRequest("You cannot sign up with a proxy.")
+				return HttpResponseBadRequest("please do not use a vpn ok thanks")
 		else:
 			spamuser = True
 		if request.POST.get('origin_id'):
@@ -1061,12 +1059,18 @@ def post_create(request, community):
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
+			new_post.body = new_post.body.replace(":skull:", "💀")
+			new_post.body = new_post.body.replace(":sob:", "😭")
+			#post.body = new_post.body.replace(":trol:", '*^#') # will be replaced by javascript
 			return render(request, 'closedverse_main/elements/community_post.html', { 
 			'post': new_post,
 			'with_community_container': True,
 			'type': 2,
 			})
 		else:
+			new_post.body = new_post.body.replace(":skull:", "💀")
+			new_post.body = new_post.body.replace(":sob:", "😭")
+			#new_post.body = new_post.body.replace(":trol:", '*^#') # will be replaced by javascript
 			return render(request, 'closedverse_main/elements/community_post.html', { 'post': new_post })
 	else:
 		raise Http404()
@@ -1095,6 +1099,13 @@ def post_view(request, post):
 		comments = post.get_comments(request, None, all_comment_count - 20)
 	else:
 		comments = post.get_comments(request)
+	# YES YES i know this method sucks fucking ass but i don't give two shits ok
+	post.body = post.body.replace(":skull:", "💀")
+	post.body = post.body.replace(":sob:", "😭")
+	post.body = post.body.replace(":100:", "💯")
+	post.body = post.body.replace(":joy:", "😂")
+	post.body = post.body.replace(":scream:", "😱")
+	#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 	return render(request, 'closedverse_main/post-view.html', {
 		'title': title,
 		#CSS might not be that friendly with this / 'classes': ['post-permlink'],
@@ -1651,6 +1662,9 @@ def post_list(request):
 	resparr = []
 
 	for post in iable:
+		is_blocked = False
+		if request.user.is_authenticated and UserBlock.find_block(request.user, post.creator):
+			is_blocked = True
 		resparr.append({
 			'id': post.id,
 			'created': django.utils.dateformat.format(post.created, 'U'),
@@ -1663,6 +1677,7 @@ def post_list(request):
 			'screenshot': (post.screenshot or None),
 			'video': (post.video or None),
 			'url': (post.url or None),
+			'user_blocked': (is_blocked),
 		})
 
 	#return HttpResponse(msgpack.packb(resparr), content_type='application/x-msgpack')
