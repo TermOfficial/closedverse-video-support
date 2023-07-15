@@ -424,6 +424,8 @@ class User(models.Model):
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
+					if request.user.is_authenticated:
+						post.user_is_blocked = UserBlock.find_block(request.user, post.creator)
 					post.body = post.body.replace(":skull:", "💀")
 					post.body = post.body.replace(":sob:", "😭")
 					post.body = post.body.replace(":100:", "💯")
@@ -904,13 +906,6 @@ class Post(models.Model):
 			#return True
 		else:
 			return False
-	def user_is_blocked(self, user):
-		if user == self.user:
-			return False
-		if not user.is_authenticated:
-			return False
-		if user.is_authenticated and UserBlock.find_block(self.user, user):
-			return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True
@@ -1064,6 +1059,7 @@ class Post(models.Model):
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
+		self.blocked_user = UserBlock.find_block(request.user, self.creator)
 		self.is_mine = self.is_mine(request.user)
 
 
@@ -1127,20 +1123,12 @@ class Comment(models.Model):
 			return False
 	def can_yeah(self, request):
 		if request.user.is_authenticated:
-			return not self.is_mine(request.user)
-			#return True
-		if request.user.is_authenticated:
 			if UserBlock.find_block(self.creator, request.user):
 				return False
+			else:
+				return not self.is_mine(request.user)
 		else:
 			return False
-	def user_is_blocked(self, user):
-		if user == self.creator:
-			return False
-		if not user.is_authenticated:
-			return False
-		if user.is_authenticated and UserBlock.find_block(self.user, user):
-			return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True
@@ -1298,13 +1286,6 @@ class Profile(models.Model):
 				return False
 			return True
 		return True
-	def user_is_blocked(self, user):
-		if user == self.user:
-			return False
-		if not user.is_authenticated:
-			return False
-		if user.is_authenticated and UserBlock.find_block(self.user, user):
-			return True
 	def can_friend(self, user=None):
 		if self.let_friendrequest == 2:
 			return False

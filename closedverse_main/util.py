@@ -220,9 +220,9 @@ def getipintel(addr):
 """
 # Now using iphub
 def iphub(addr):
-	if not '192.168' in addr:
-		get = requests.get('http://proxycheck.io/v2/' + addr + '?key=111111-222222-333333-444444&risk=1&vpn=1')
-		if get.json()['vpn'] == 'yes':
+	if settings.IPHUB_KEY and not '192.168' in addr:
+		get = requests.get('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.IPHUB_KEY})
+		if get.json()['block'] == 1:
 			return True
 		else:
 			return False
