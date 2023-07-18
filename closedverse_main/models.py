@@ -426,6 +426,8 @@ class User(models.Model):
 					post.recent_comment = post.recent_comment()
 					if request.user.is_authenticated:
 						post.user_is_blocked = UserBlock.find_block(request.user, post.creator)
+					else:
+						post.user_is_blocked = False
 					post.body = post.body.replace(":skull:", "💀")
 					post.body = post.body.replace(":sob:", "😭")
 					post.body = post.body.replace(":100:", "💯")
@@ -728,6 +730,11 @@ class Community(models.Model):
 		if request:
 			for post in posts:
 				post.setup(request)
+				# THE TRUE METHOD
+				if request.user.is_authenticated:
+					post.user_is_blocked = UserBlock.find_block(request.user, self.creator)
+				else:
+					post.user_is_blocked = False
 				post.body = post.body.replace(":skull:", "💀")
 				post.body = post.body.replace(":sob:", "😭")
 				post.body = post.body.replace(":100:", "💯")
@@ -758,6 +765,10 @@ class Community(models.Model):
 
 
 	def setup(self, request):
+		if request.user.is_authenticated:
+			self.user_is_blocked = UserBlock.find_block(request.user, self.creator)
+		else:
+			self.user_is_blocked = False
 		if request.user.is_authenticated:
 			self.post_perm = self.post_perm(request)
 			self.has_favorite = self.has_favorite(request)
@@ -1059,11 +1070,7 @@ class Post(models.Model):
 	def setup(self, request):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
-		self.blocked_user = UserBlock.find_block(request.user, self.creator)
 		self.is_mine = self.is_mine(request.user)
-
-
-
 	def max_yeahs():
 		try:
 			max_yeahs_post = Post.objects.annotate(num_yeahs=Count('yeah')).aggregate(max_yeahs=Max('num_yeahs'))['max_yeahs']
@@ -1188,7 +1195,6 @@ class Comment(models.Model):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
 		self.is_mine = self.is_mine(request.user)
-		self.blocked_user = True
 
 class Yeah(models.Model):
 	# Todo: make this a plain int at some point

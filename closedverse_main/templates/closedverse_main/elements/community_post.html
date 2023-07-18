@@ -18,7 +18,7 @@
     {% if not post.creator.is_active %}
 		<p style="color: #f00;">Banned</p>
 	{% endif %}
-	<p style="color: #f00;">Block status: {{ post.user_is_blocked }}</p>
+	<!--<p style="color: #f00;">Block status: {{ post.user_is_blocked }}</p>-->
 	<p class="timestamp-container">
 	  <span class="spoiler-status{% if post.spoils %} spoiler{% endif %}">Spoilers·</span>
 	  {% if post.has_edit %}
@@ -57,13 +57,13 @@
                 <button type="button" class="hidden-content-button">View Anyway</button>
           </p></div>
 		{% endif %}
-		{% if request.user.is_authenticated and post.blocked_user %}
+		{% if request.user.is_authenticated and post.user_is_blocked == True %}
 			<div class="hidden-content"><p>Content hidden because you've blocked this user.</p>
                 <button type="button" class="hidden-content-button">View Anyway</button>
           	</div>
 		{% endif %}
         <div class="post-meta">
-          <button type="button" {% if post.blocked_user %}disabled{% endif %} {% if post.can_yeah == 'False' %}disabled{% endif %} class="symbol submit yeah-button
+          <button type="button" {% if post.user_is_blocked %}disabled{% endif %} {% if post.can_yeah == 'False' %}disabled{% endif %} class="symbol submit yeah-button
 		  {% if post.has_yeah %}empathy-added{% endif %}
 		  " data-feeling="" data-action="{% if post.is_reply %}{% url "main:comment-add-yeah" post.id %}{% else %}{% url "main:post-add-yeah" post.id %}{% endif %}" data-url-id="{{ post.id }}"><span class="yeah-button-text">{% empathy_txt post.feeling post.has_yeah %}</span></button>
 		  {% if post.url %}

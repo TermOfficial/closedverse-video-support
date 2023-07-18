@@ -1662,9 +1662,11 @@ def post_list(request):
 	resparr = []
 
 	for post in iable:
-		is_blocked = False
+		is_ = False
 		if request.user.is_authenticated and UserBlock.find_block(request.user, post.creator):
 			is_blocked = True
+		else:
+			is_blocked = False
 		resparr.append({
 			'id': post.id,
 			'created': django.utils.dateformat.format(post.created, 'U'),
@@ -1677,7 +1679,7 @@ def post_list(request):
 			'screenshot': (post.screenshot or None),
 			'video': (post.video or None),
 			'url': (post.url or None),
-			'user_blocked': (is_blocked),
+			'user_is_blocked': (is_blocked or False),
 		})
 
 	#return HttpResponse(msgpack.packb(resparr), content_type='application/x-msgpack')
