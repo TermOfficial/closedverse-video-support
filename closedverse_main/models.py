@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from django.db import models
 from django.contrib.auth.models import BaseUserManager
-from django.db.models import Q, QuerySet, Max, F, Count, Case, When, Exists, OuterRef
+from django.db.models import Q, QuerySet, Max, F, Count, Case, When, Exists, OuterRef, Subquery
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.utils.dateformat import format
@@ -20,6 +20,26 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 import re
 import random
+
+# ideally this would be done in js so you can preview them or even morer ideallyierier it would be both js and 
+emote_table_temp = {
+	# at the moment this JUST replaces text with other text - not html like closed.pizza did
+	':skull:': '💀',
+	':sob:': '😭',
+	':100:': '💯',
+	':joy:': '😂',
+	':scream:': '😱',
+	'foo': 'bar',
+}
+#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
+# remove and kill this
+def funny_stupid_azz_emote_table_replace(text):
+	# alias = emote, mapping = emoji
+	text_copy = text
+	for alias, mapping in emote_table_temp.items():
+		text_copy = text_copy.replace(alias, mapping)
+	return text_copy
+
 
 feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (69, 'easter egg'), )
 #feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (39, 'lol i lied'), (69, 'adam is gay'), (70, 'I am a faggot!'), (71, 'Juice'), (72, "Commit Suicide"), (73, "Fresh!"))
@@ -375,14 +395,12 @@ class User(models.Model):
 	def num_friends(self):
 		return self.friend_source.filter().count() + self.friend_target.filter().count()
 	def can_follow(self, user):
-		if user.is_authenticated:
-			if UserBlock.find_block(self, user):
-				return False
+		if UserBlock.find_block(self, user):
+			return False
 		return True
 	def can_view(self, user):
-		if user.is_authenticated:
-			if UserBlock.find_block(self, user, full=True):
-				return False
+		if UserBlock.find_block(self, user) == 2:
+			return False
 		return True
 	def is_following(self, me):
 		if not me.is_authenticated:
@@ -424,16 +442,6 @@ class User(models.Model):
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
-					if request.user.is_authenticated:
-						post.user_is_blocked = UserBlock.find_block(request.user, post.creator)
-					else:
-						post.user_is_blocked = False
-					post.body = post.body.replace(":skull:", "💀")
-					post.body = post.body.replace(":sob:", "😭")
-					post.body = post.body.replace(":100:", "💯")
-					post.body = post.body.replace(":joy:", "😂")
-					post.body = post.body.replace(":scream:", "😱")
-					#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 		return posts
 	def get_comments(self, limit=50, offset=0, request=None):
 		if request.user.is_authenticated:
@@ -444,12 +452,6 @@ class User(models.Model):
 		if request:
 				for post in posts:
 					post.setup(request)
-					post.body = post.body.replace(":skull:", "💀")
-					post.body = post.body.replace(":sob:", "😭")
-					post.body = post.body.replace(":100:", "💯")
-					post.body = post.body.replace(":joy:", "😂")
-					post.body = post.body.replace(":scream:", "😱")
-					#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 		return posts
 	def get_yeahed(self, type=0, limit=20, offset=0):
 		# 0 - post, 1 - comment, 2 - any
@@ -723,8 +725,12 @@ class Community(models.Model):
 		return not self.is_activity() and not self.type == 4
 	def get_posts(self, limit=50, offset=0, request=None, favorite=False):
 		if request.user.is_authenticated:
+			# get users who blocked you
+			blocked_me = request.user.block_target.filter().values('source')
+			
 			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
-			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
+			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)
+			).exclude(creator__id__in=Subquery(blocked_me)).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
 		else:
 			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter(community_id=self.id).order_by('-created').exclude(community__require_auth=True)[offset:offset + limit]
 		if request:
@@ -732,15 +738,8 @@ class Community(models.Model):
 				post.setup(request)
 				# THE TRUE METHOD
 				if request.user.is_authenticated:
-					post.user_is_blocked = UserBlock.find_block(request.user, self.creator)
-				else:
-					post.user_is_blocked = False
-				post.body = post.body.replace(":skull:", "💀")
-				post.body = post.body.replace(":sob:", "😭")
-				post.body = post.body.replace(":100:", "💯")
-				post.body = post.body.replace(":joy:", "😂")
-				post.body = post.body.replace(":scream:", "😱")
-				#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
+					post.user_is_blocked = UserBlock.find_block(post.creator, request.user)
+					#print(str(post) + ' to ' + str(self.creator) + ':' + str(post.user_is_blocked))
 				post.recent_comment = post.recent_comment()
 		return posts
 	def post_perm(self, request):
@@ -765,10 +764,6 @@ class Community(models.Model):
 
 
 	def setup(self, request):
-		if request.user.is_authenticated:
-			self.user_is_blocked = UserBlock.find_block(request.user, self.creator)
-		else:
-			self.user_is_blocked = False
 		if request.user.is_authenticated:
 			self.post_perm = self.post_perm(request)
 			self.has_favorite = self.has_favorite(request)
@@ -909,13 +904,11 @@ class Post(models.Model):
 		else:
 			return False
 	def can_yeah(self, request):
-		if request.user.is_authenticated:
-			if UserBlock.find_block(self.creator, request.user):
-				return False
-			return not self.is_mine(request.user)
-			# why did cedar-django do this? god knows
-			#return True
-		else:
+		if not request.user.is_authenticated:
+			return False
+		# why did cedar-django do this? god knows
+		#return True
+		if self.is_mine(request.user) or UserBlock.find_block(self.creator, request.user):
 			return False
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
@@ -944,9 +937,8 @@ class Post(models.Model):
 		# TODO: Make this so that if a post's comments exceeds 100, make the user able to close the comments section
 		if self.number_comments() > 500:
 			return False
-		if request.user.is_authenticated:
-			if UserBlock.find_block(self.creator, request.user):
-				return False
+		if UserBlock.find_block(self.creator, request.user):
+			return False
 		return True
 	def get_comments(self, request=None, limit=0, offset=0):
 		if request.user.is_authenticated:
@@ -967,12 +959,6 @@ class Post(models.Model):
 		if request:
 			for post in comments:
 				post.setup(request)
-				post.body = post.body.replace(":skull:", "💀")
-				post.body = post.body.replace(":sob:", "😭")
-				post.body = post.body.replace(":100:", "💯")
-				post.body = post.body.replace(":joy:", "😂")
-				post.body = post.body.replace(":scream:", "😱")
-				#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 		return comments
 	def create_comment(self, request):
 		if not self.can_comment(request):
@@ -1071,6 +1057,7 @@ class Post(models.Model):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
 		self.is_mine = self.is_mine(request.user)
+		self.body = funny_stupid_azz_emote_table_replace(self.body)
 	def max_yeahs():
 		try:
 			max_yeahs_post = Post.objects.annotate(num_yeahs=Count('yeah')).aggregate(max_yeahs=Max('num_yeahs'))['max_yeahs']
@@ -1129,12 +1116,9 @@ class Comment(models.Model):
 		else:
 			return False
 	def can_yeah(self, request):
-		if request.user.is_authenticated:
-			if UserBlock.find_block(self.creator, request.user):
-				return False
-			else:
-				return not self.is_mine(request.user)
-		else:
+		if not request.user.is_authenticated:
+			return False
+		if self.is_mine(request.user) or UserBlock.find_block(self.creator, request.user):
 			return False
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
@@ -1195,6 +1179,7 @@ class Comment(models.Model):
 		self.has_yeah = self.has_yeah(request)
 		self.can_yeah = self.can_yeah(request)
 		self.is_mine = self.is_mine(request.user)
+		self.body = funny_stupid_azz_emote_table_replace(self.body)
 
 class Yeah(models.Model):
 	# Todo: make this a plain int at some point
@@ -1295,7 +1280,7 @@ class Profile(models.Model):
 	def can_friend(self, user=None):
 		if self.let_friendrequest == 2:
 			return False
-		if user.is_authenticated and UserBlock.find_block(self.user, user):
+		if UserBlock.find_block(self.user, user):
 			return False
 		elif self.let_friendrequest == 1:
 			if not user.is_following(self.user):
@@ -1717,19 +1702,29 @@ class UserBlock(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	source = models.ForeignKey(User, related_name='block_source', on_delete=models.CASCADE)
 	target = models.ForeignKey(User, related_name='block_target', on_delete=models.CASCADE)
-	full = models.BooleanField(default=False)
+	# ...???
+	#full = models.BooleanField(default=False)
 	
 	def __str__(self):
 		return "Block created from " + str(self.source) + " to " + str(self.target)
 
 	@staticmethod
-	def find_block(first, second, full=False):
-		if full:
-			return UserBlock.objects.filter(Q(source=first, full=True) & Q(target=second, full=True) | Q(target=first, full=True) & Q(source=second, full=True)).exists()
-		return UserBlock.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second)).exists()
-
-	def make_block(first, second):
-		return ""
+	def find_block(first, second):
+	#, full=False):
+		# in every instance of find_block that I have seen, the second argument is always the request user
+		# so in the interest of making this implementation easy (forgot where the checks are supposed to go otherwise)
+		if not second.is_authenticated:
+			return False
+		#if full:
+		#	return UserBlock.objects.filter(Q(source=first, full=full) & Q(target=second, full=full) | Q(target=first, full=full) & Q(source=second, full=full)).exists()
+		block = UserBlock.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second))
+		if not block.exists():
+			return False
+		if block.first().target == second:
+			# if you are the target....
+			return 2
+		else:
+			return 1
 
 class AuditLog(models.Model):
 	id = models.AutoField(primary_key=True)

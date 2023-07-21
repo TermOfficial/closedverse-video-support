@@ -403,6 +403,8 @@ def user_view(request, username):
 	profile.setup(request)
 	if request.user.is_authenticated:
 		profile.can_friend = profile.can_friend(request.user)
+		user.can_follow = user.can_follow(request.user)
+
 	if request.method == 'POST' and request.user.is_authenticated:
 		user = request.user
 		profile = user.profile()
@@ -587,6 +589,9 @@ def user_posts(request, username):
 		title = '{0}\'s posts'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if request.user.is_authenticated:
+		#profile.can_friend = profile.can_friend(request.user)
+		user.can_follow = user.can_follow(request.user)
 	
 	if request.GET.get('offset'):
 		posts = user.get_posts(50, int(request.GET['offset']), request)
@@ -632,6 +637,9 @@ def user_yeahs(request, username):
 		title = '{0}\'s yeahs'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if request.user.is_authenticated:
+		#profile.can_friend = profile.can_friend(request.user)
+		user.can_follow = user.can_follow(request.user)
 
 	if not profile.yeahs_visible:
 		raise Http404()
@@ -683,6 +691,9 @@ def user_comments(request, username):
 		title = '{0}\'s comments'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if request.user.is_authenticated:
+		#profile.can_friend = profile.can_friend(request.user)
+		user.can_follow = user.can_follow(request.user)
 	
 	if not profile.comments_visible:
 		raise Http404()
@@ -723,6 +734,9 @@ def user_following(request, username):
 		title = '{0}\'s follows'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if request.user.is_authenticated:
+		#profile.can_friend = profile.can_friend(request.user)
+		user.can_follow = user.can_follow(request.user)
 
 	if request.GET.get('offset'):
 		following_list = user.get_following(20, int(request.GET['offset']))
@@ -765,6 +779,9 @@ def user_followers(request, username):
 		title = '{0}\'s followers'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if request.user.is_authenticated:
+		#profile.can_friend = profile.can_friend(request.user)
+		user.can_follow = user.can_follow(request.user)
 
 	if request.GET.get('offset'):
 		followers_list = user.get_followers(20, int(request.GET['offset']))
@@ -808,6 +825,9 @@ def user_friends(request, username):
 		title = '{0}\'s friends'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if request.user.is_authenticated:
+		#profile.can_friend = profile.can_friend(request.user)
+		user.can_follow = user.can_follow(request.user)
 
 	if request.GET.get('offset'):
 		friends_list = Friendship.get_friendships(user, 20, int(request.GET['offset']))
@@ -1059,18 +1079,14 @@ def post_create(request, community):
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
-			new_post.body = new_post.body.replace(":skull:", "💀")
-			new_post.body = new_post.body.replace(":sob:", "😭")
-			#post.body = new_post.body.replace(":trol:", '*^#') # will be replaced by javascript
+			new_post.body = funny_stupid_azz_emote_table_replace(new_post.body)
 			return render(request, 'closedverse_main/elements/community_post.html', { 
 			'post': new_post,
 			'with_community_container': True,
 			'type': 2,
 			})
 		else:
-			new_post.body = new_post.body.replace(":skull:", "💀")
-			new_post.body = new_post.body.replace(":sob:", "😭")
-			#new_post.body = new_post.body.replace(":trol:", '*^#') # will be replaced by javascript
+			new_post.body = funny_stupid_azz_emote_table_replace(new_post.body)
 			return render(request, 'closedverse_main/elements/community_post.html', { 'post': new_post })
 	else:
 		raise Http404()
@@ -1100,12 +1116,7 @@ def post_view(request, post):
 	else:
 		comments = post.get_comments(request)
 	# YES YES i know this method sucks fucking ass but i don't give two shits ok
-	post.body = post.body.replace(":skull:", "💀")
-	post.body = post.body.replace(":sob:", "😭")
-	post.body = post.body.replace(":100:", "💯")
-	post.body = post.body.replace(":joy:", "😂")
-	post.body = post.body.replace(":scream:", "😱")
-	#post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
+	post.body = funny_stupid_azz_emote_table_replace(post.body)
 	return render(request, 'closedverse_main/post-view.html', {
 		'title': title,
 		#CSS might not be that friendly with this / 'classes': ['post-permlink'],
@@ -1662,11 +1673,6 @@ def post_list(request):
 	resparr = []
 
 	for post in iable:
-		is_ = False
-		if request.user.is_authenticated and UserBlock.find_block(request.user, post.creator):
-			is_blocked = True
-		else:
-			is_blocked = False
 		resparr.append({
 			'id': post.id,
 			'created': django.utils.dateformat.format(post.created, 'U'),
@@ -1679,7 +1685,6 @@ def post_list(request):
 			'screenshot': (post.screenshot or None),
 			'video': (post.video or None),
 			'url': (post.url or None),
-			'user_is_blocked': (is_blocked or False),
 		})
 
 	#return HttpResponse(msgpack.packb(resparr), content_type='application/x-msgpack')
