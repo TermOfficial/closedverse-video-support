@@ -65,7 +65,8 @@ X_FRAME_OPTIONS='SAMEORIGIN'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'xff.middleware.XForwardedForMiddleware',
+    # use this middleware if you need x-forwarded-for support
+    #'xff.middleware.XForwardedForMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -75,8 +76,9 @@ MIDDLEWARE = [
     #'ban.middleware.BanManagement',
     'closedverse_main.middleware.ClosedMiddleware',
     #'maintenance.middleware.MaintenanceManagement',
-    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
+if not DEBUG:
+	MIDDLEWARE += ['whitenoise.middleware.WhiteNoiseMiddleware']
 
 ROOT_URLCONF = 'closedverse.urls'
 
@@ -171,13 +173,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 #STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
-# Define static files in the base directory
-#STATICFILES_DIRS = [
-#    os.path.join(BASE_DIR, 'static/'),
-#]
+if not DEBUG:
+	# without this, this will not serve static for admin (and other apps potentially)
+	WHITENOISE_USE_FINDERS = True
+	STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+	STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+else:
+	# Define static files in the base directory
+	STATICFILES_DIRS = [
+	    os.path.join(BASE_DIR, 'static/'),
+	]
 
 # Closedverse models and routes for Django
 AUTH_USER_MODEL = 'closedverse_main.User'
