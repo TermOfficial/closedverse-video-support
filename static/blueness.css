@@ -472,7 +472,7 @@ border-top: 1px solid #222;
     border: 1px solid rgba(221, 221, 221, 0);
 }
 #wrapper, #image-header-content {
-    background: var(--theme, #eeeeee) var(--background, url('img/blueness-pattern.png')) !important;
+    background: var(--theme, #eeeeee) var(--background, url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAIAAAC2BqGFAAAABmJLR0QAFgAWACbcRYNiAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QkQChoXcqytowAAATpJREFUeNrt3MEJwzAQRFFn8MlVuIT0X5jPqSEgLVr5/QLC7DskYII/9/095vQ8z9Gt67omfXIOlQQaNGiBBg0aAWjQAg0atECDFmjQoAUatECDBi3QoLUIdMd/z0ydHco140O55oRQrjkklGvOOct05v1Rc57mQJy8WblyWN6sXDkvL1cuGxnKNVNDuWawZx1FgQYNWqBBg0YAGrRAgwYt0KAFGjRogQYt0KBBCzRogQYNWqBBCzRo0AINWqBBgxZo0AINGrRAgxZo0KAFGrSWgG73Grypg9N3eq+p6X5Al5HZ44z152WnY1Yedg58B1nZez7LGoiTNWdtpjz+q2Mb6+GHZP2JGyjP+jFsbT1pfHrNbap8eNZRFmjQoAUaNGgEoEELNGjQAg1aoEGDFmjQAg0atECD1p/9AKkzTyh2EOP+AAAAAElFTkSuQmCC')) !important;
 }
 #empathy-content:before {
     background: url(img/rks.png) no-repeat 0 0 !important;

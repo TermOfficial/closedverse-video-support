@@ -568,12 +568,12 @@ var Olv = Olv || {};
 			case 500:
 				errmsg = "An error has been encountered in the server.\n";
 				if(a.getResponseHeader('Content-Type').indexOf('html') < 0) {
-					errmsg += "Error information is available; please send this to an administrator:\n";
-					if(innerWidth <= 480) {
+					window.tmpUnescapedHtmlForError = errmsg + "<br>Error information is available; please send this to an administrator:<code>" + b.SimpleDialog.htmlLineBreak(a.responseText) + "</pre>\n";
+					/*if(innerWidth <= 480) {
 						errmsg += a.responseText.substr(0, 400);
 					} else {
 						errmsg += a.responseText.substr(0, 1000);
-					}
+					}*/
 				}
 				return {
 				error_code: "Internal server error",
@@ -1262,7 +1262,13 @@ var Olv = Olv || {};
               , f = a.trim(c.modalTypes || "");
             e.types = f ? f.split(/\s+/) : [],
             d.find(".window-title").text(c.title || "");
-            var g = this.htmlLineBreak(c.body || "");
+            var g;
+            if(window.tmpUnescapedHtmlForError) {
+                g = window.tmpUnescapedHtmlForError;
+                window.tmpUnescapedHtmlForError = null;
+            } else {
+                g = this.htmlLineBreak(c.body || "");
+            }
             d.find(".window-body-content").html(g),
             d.find(".ok-button").text(c.okLabel || b.loc("olv.portal.ok"));
             var h = d.find(".cancel-button");
