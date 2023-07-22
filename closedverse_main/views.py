@@ -206,13 +206,10 @@ def login_page(request):
 		# Now let's authenticate.
 		# Wait, first check if the user exists. Remove spaces from the username, because some people do that.
 		# Hold up, first we need to check proxe.
-		# Never mind
-		"""
-		if settings.CLOSEDVERSE_PROD:
-			if iphub(request.META['REMOTE_ADDR']):
-				if settings.DISALLOW_PROXY:
-					return HttpResponseNotFound("The user doesn't exist.")
-		"""
+		
+		# Uncomment this if you want users to be forbidden from logging in with a proxy.
+		#if settings.CLOSEDVERSE_PROD and settings.DISALLOW_PROXY and iphub(request.META['REMOTE_ADDR']):
+		#	return HttpResponseNotFound("The user doesn't exist.")
 		user = User.objects.authenticate(username=request.POST['username'], password=request.POST['password'])
 		# None = doesn't exist, False = invalid password.
 		if user is None:
@@ -264,26 +261,34 @@ def signup_page(request):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
-		for keyword in ['admin', 'admln', 'adrnin', 'admn', 'arian', 'kordi', 'windowscj', 'gab', 'gabalt', 'terminal', 'term', 'termy', 'pp', 'penis', 'nazi', 'hitler', 'hitlre', 'ihtler', 'heil', 'closedverse', 'nigga', 'nigger', 'niger', 'nigga', 'faggot', 'fag', 'kkk', 'smf9', 'dakux', 'dacucks', 'adrian']:
-			if keyword in request.POST['username'].lower():
-				return HttpResponseForbidden("That username isn't funny. Please pick a funny username.")
-			if keyword in request.POST['nickname'].lower():
-				return HttpResponseForbidden("That nickname isn't funny. Please pick a funny nickname.")
-		for keyword in ['adam']:
-			if keyword in request.POST['username'].lower():
-				return HttpResponseForbidden("Adam, no.")
-			if keyword in request.POST['nickname'].lower():
-				return HttpResponseForbidden("Adam, no.")
-		if request.POST['username'].lower() == "funny" or request.POST['username'].lower() == "Funny":
-			return HttpResponseForbidden("I'm laughing so hard right now!! No seriously. Pick a better username.")
-		if request.POST['nickname'].lower() == "funny" or request.POST['nickname'].lower() == "Funny":
-			return HttpResponseForbidden("I'm laughing so hard right now!! No seriously. Pick a better nickname.")
-		for keyword in ['doeggs']:
-			if keyword in request.POST['username'].lower():
-				return HttpResponseForbidden("the world may never know")
-		for keyword in ['windowscj', 'gabalt']:
-			if keyword in request.POST['origin_id'].lower():
-				return HttpResponseForbidden("You're very funny. Unfortunately your funniness blah blah blah fuck off.")
+		
+		# forbidden keywords
+		groups = [
+			['admin', 'admln', 'adrnin', 'admn', 'arian', 'kordi', 'windowscj', 'gab', 'gabalt', 'terminal', 'term', 'termy', 'penis', 'nazi', 'hitler', 'hitlre', 'ihtler', 'heil', 'closedverse', 'nigga', 'nigger', 'niger', 'nigga', 'faggot', 'fag', 'kkk', 'smf9', 'dakux', 'dacucks', 'adrian'],
+			['adam'],
+			['funny'],
+			['doeggs', 'do_eggs', 'do-eggs', 'do.eggs'],
+		]
+		messages = [
+			"That username isn't funny. Please pick a funny username.",
+			"Adam, no.",
+			"I'm laughing so hard right now!! No seriously. Pick a better username.",
+			"the world may never know",
+		]
+		for id in range(len(groups)):
+			for keyword in groups[id]:
+				if keyword in request.POST['username'].lower() or keyword in request.POST['nickname'].lower():
+					# perhaps warn admins at a later time
+					return HttpResponseForbidden(messages[id])
+
+		# this is such a miniscule amount of NNIDs that either an admin or a person could
+		# claim all of them, in which case they could not be reused
+		#for keyword in ['windowscj', 'gabalt']:
+		#	if keyword in request.POST['origin_id'].lower():
+		#		return HttpResponseForbidden("You're very funny. Unfortunately your funniness blah blah blah fuck off.")
+
+		# end of forbidden keywords
+
 		conflicting_user = User.objects.filter(Q(username__iexact=request.POST['username']) | Q(username__iexact=request.POST['username'].replace(' ', '')))
 		if conflicting_user:
 			return HttpResponseBadRequest("A user with that username already exists.")
@@ -392,8 +397,9 @@ def logout_page(request):
 def user_view(request, username):
 	"""The user view page, has recent posts/yeahs."""
 	user = get_object_or_404(User, username__iexact=username)
-	if user.username == "ClosedverseAdmin":
-		raise Http404()
+	# if this user doesn't have a profile then the page won't work anyway
+	#if user.username == "ClosedverseAdmin":
+	#	raise Http404()
 	if user.is_me(request):
 		title = 'My profile'
 	else:
@@ -562,7 +568,7 @@ def user_view(request, username):
 		profile.save()
 		user.save()
 		return HttpResponse()
-	posts = user.get_posts(3, 0, request)
+	posts = user.get_posts(3, 0, request, timezone.now())
 	yeahed = user.get_yeahed(0, 3)
 	for yeah in yeahed:
 		if user.is_me(request):

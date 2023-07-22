@@ -494,7 +494,7 @@ var Olv = Olv || {};
 			Olv.Form.get('/lights')
 		},
 		prlinkConf: function() {
-            if(ass.includes("https://closedverse.termy.lol")){
+            if(ass.includes(location.origin)) {
 			    $('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>Link Redirection</h1><div class=window-body><p class=window-body-content>Are you sure you want to go to <b>'+ass+'</b> on this site?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
             } else {
                 $('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>You are now leaving Closedverse.</h1><div class=window-body><p class=window-body-content>You are now exiting the closedverse website.<br>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
