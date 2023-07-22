@@ -429,7 +429,7 @@ class User(models.Model):
 	# BLOCK this user from SOURCE
 	def make_block(self, source):
 		if find_block(source, self):
-			return False
+			return UserBlock.objects.remove(source=source, target=self)
 		return UserBlock.objects.create(source=source, target=self)
 	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
