@@ -429,7 +429,7 @@ class User(models.Model):
 	# BLOCK this user from SOURCE
 	def make_block(self, source):
 		if find_block(source, self):
-			return UserBlock.objects.remove(source=source, target=self)
+			return False
 		return UserBlock.objects.create(source=source, target=self)
 	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
@@ -813,7 +813,7 @@ class Community(models.Model):
 		for keyword in ['faggot', 'fag', 'nigger', 'nigga', 'hitler']:
 			if keyword in body.lower():
 				return 9
-		if body.isspace():
+		if body.isspace() and not drawing:
 			return 10
 		new_post = self.post_set.create(body=body, creator=request.user, community=self, feeling=int(request.POST.get('feeling_id', 0)), spoils=bool(request.POST.get('is_spoiler')), screenshot=upload, drawing=drawing, url=request.POST.get('url'), video=video)
 		new_post.is_mine = True
