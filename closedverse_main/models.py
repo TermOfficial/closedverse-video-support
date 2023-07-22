@@ -427,11 +427,11 @@ class User(models.Model):
 		#	return False
 		return True
 	# BLOCK this user from SOURCE
-	def make_block(self, source, full=False):
+	def make_block(self, source):
 		if find_block(source, self):
 			return False
-		return UserBlock.objects.create(source=source, target=self, full=full)
-	def get_posts(self, limit=50, offset=0, request=None, offset_time=timezone.now()):
+		return UserBlock.objects.create(source=source, target=self)
+	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
 			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
 			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter(created__lte=offset_time).order_by('-created')[offset:offset + limit]
@@ -793,8 +793,6 @@ class Community(models.Model):
 		drawing = None
 		video = None
 		body = request.POST.get('body')
-		if request.POST.get('_post_type') == 'painting':
-			body = 'drawing'
 		if request.FILES.get('screen'):
 			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
@@ -813,7 +811,7 @@ class Community(models.Model):
 		if request.user.has_postspam(body, upload, drawing):
 			return 7
 		for keyword in ['faggot', 'fag', 'nigger', 'nigga', 'hitler']:
-			if keyword in body:
+			if keyword in body.lower():
 				return 9
 		if body.isspace():
 			return 10
