@@ -1384,8 +1384,9 @@ def user_friendrequest_delete(request, username):
 @login_required
 def user_addblock(request, username):
 	user = get_object_or_404(User, username=username)
-	user.make_block(request.user)
-	return HttpResponse()
+	didwork = user.make_block(request.user)
+	return JsonResponse({'success': didwork})
+	# return HttpResponse() why is this even here???
 
 # Notifications work differently since the Openverse rebranding. (that we changed back)
 # They used to respond with a JSON for values for unread notifications and messages.
