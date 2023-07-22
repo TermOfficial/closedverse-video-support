@@ -18,7 +18,6 @@
     {% if not post.creator.is_active %}
 		<p style="color: #f00;">Banned</p>
 	{% endif %}
-	<!--<p style="color: #f00;">Block status: {{ post.user_is_blocked }}</p>-->
 	<p class="timestamp-container">
 	  <span class="spoiler-status{% if post.spoils %} spoiler{% endif %}">Spoilers·</span>
 	  {% if post.has_edit %}

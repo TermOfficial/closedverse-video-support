@@ -21,7 +21,7 @@ from django.dispatch import receiver
 import re
 import random
 
-# ideally this would be done in js so you can preview them or even morer ideallyierier it would be both js and 
+# ideally this would be done in js so you can preview them or even morer ideallyierier it would be both js and in the db (???????
 emote_table_temp = {
 	# at the moment this JUST replaces text with other text - not html like closed.pizza did
 	':skull:': '💀',
@@ -29,7 +29,6 @@ emote_table_temp = {
 	':100:': '💯',
 	':joy:': '😂',
 	':scream:': '😱',
-	'foo': 'bar',
 }
 #post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 # remove and kill this
@@ -254,7 +253,7 @@ class User(models.Model):
 			return None
 		return infodecode[0]
 	def has_plain_avatar(self):
-		if not self.has_mh and 'http' in self.avatar and not 'gravatar.com' in self.avatar:
+		if not self.has_mh and '/' in self.avatar and not 'gravatar.com' in self.avatar:
 			return True
 	def has_avatar(self):
 		if not self.avatar or len(self.avatar) == 1:
@@ -432,23 +431,23 @@ class User(models.Model):
 		if find_block(source, self):
 			return False
 		return UserBlock.objects.create(source=source, target=self, full=full)
-	def get_posts(self, limit=50, offset=0, request=None):
+	def get_posts(self, limit=50, offset=0, request=None, offset_time=timezone.now()):
 		if request.user.is_authenticated:
 			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
-			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter().order_by('-created')[offset:offset + limit]
+			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter(created__lte=offset_time).order_by('-created')[offset:offset + limit]
 		else:
-			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter().order_by('-created').exclude(community__require_auth=True)[offset:offset + limit]
+			posts = self.post_set.select_related('community').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter(created__lte=offset_time).order_by('-created').exclude(community__require_auth=True)[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
 					post.recent_comment = post.recent_comment()
 		return posts
-	def get_comments(self, limit=50, offset=0, request=None):
+	def get_comments(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
 			has_yeah = Yeah.objects.filter(comment=OuterRef('id'), by=request.user.id)
-			posts = self.comment_set.select_related('original_post').select_related('creator').select_related('original_post__creator').annotate(num_yeahs=Count('yeah', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter().order_by('-created')[offset:offset + limit]
+			posts = self.comment_set.select_related('original_post').select_related('creator').select_related('original_post__creator').annotate(num_yeahs=Count('yeah', distinct=True), yeah_given=Exists(has_yeah, distinct=True)).filter(created__lte=offset_time).order_by('-created')[offset:offset + limit]
 		else:
-			posts = self.comment_set.select_related('original_post').select_related('original_post__creator').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True)).filter().order_by('-created').exclude(original_post__community__require_auth=True)[offset:offset + limit]
+			posts = self.comment_set.select_related('original_post').select_related('original_post__creator').select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True)).filter(created__lte=offset_time).order_by('-created').exclude(original_post__community__require_auth=True)[offset:offset + limit]
 		if request:
 				for post in posts:
 					post.setup(request)
@@ -723,16 +722,18 @@ class Community(models.Model):
 		return self.tags == 'activity'
 	def clickable(self):
 		return not self.is_activity() and not self.type == 4
-	def get_posts(self, limit=50, offset=0, request=None, favorite=False):
+	# have yet to see a usage of this without all of these params so sure, offset_time is default
+	#def get_posts(self, limit=50, offset=0, request=None, favorite=False):
+	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
 			# get users who blocked you
 			blocked_me = request.user.block_target.filter().values('source')
 			
 			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
 			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True), yeah_given=Exists(has_yeah, distinct=True)
-			).exclude(creator__id__in=Subquery(blocked_me)).filter(community_id=self.id).order_by('-created')[offset:offset + limit]
+			).exclude(creator__id__in=Subquery(blocked_me)).filter(community_id=self.id, created__lte=offset_time).order_by('-created')[offset:offset + limit]
 		else:
-			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter(community_id=self.id).order_by('-created').exclude(community__require_auth=True)[offset:offset + limit]
+			posts = Post.objects.select_related('creator').annotate(num_yeahs=Count('yeah', distinct=True), num_comments=Count('comment', distinct=True)).filter(community_id=self.id, created__lte=offset_time).order_by('-created').exclude(community__require_auth=True)[offset:offset + limit]
 		if request:
 			for post in posts:
 				post.setup(request)
@@ -775,8 +776,8 @@ class Community(models.Model):
 		if not limit is False and not limit > 0:
 			return 8
 		del(limit)
-		if Post.real.filter(Q(creator=request.user) | Q(creator__addr=request.user.addr), created__gt=timezone.now() - timedelta(seconds=10)).exists():
-			return 3
+		#if Post.real.filter(Q(creator=request.user) | Q(creator__addr=request.user.addr), created__gt=timezone.now() - timedelta(seconds=10)).exists():
+		#	return 3
 		if request.POST.get('url'):
 			try:
 				URLValidator()(value=request.POST['url'])
@@ -942,20 +943,23 @@ class Post(models.Model):
 		return True
 	def get_comments(self, request=None, limit=0, offset=0):
 		if request.user.is_authenticated:
+			blocked_me = request.user.block_target.filter().values('source')
+			
 			has_yeah = Yeah.objects.filter(comment=OuterRef('id'), by=request.user.id)
+			comments_pre = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)
+			).exclude(creator__id__in=Subquery(blocked_me)).filter(original_post=self).order_by('created')
+			comments = comments_pre
 			if limit:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)).filter(original_post=self).order_by('created')[offset:offset + limit]
+				comments = comments_pre[offset:offset + limit]
 			elif offset:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)).filter(original_post=self).order_by('created')[offset:]
-			else:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah'), yeah_given=Exists(has_yeah)).filter(original_post=self).order_by('created')
+				comments = comments_pre[offset:]
 		else:
+			comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)
+			comments = comments_pre
 			if limit:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)[offset:offset + limit]
+				comments = comments_pre[offset:offset + limit]
 			elif offset:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)[offset:]
-			else:
-				comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)
+				comments = comments_pre[offset:]
 		if request:
 			for post in comments:
 				post.setup(request)

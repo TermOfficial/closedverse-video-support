@@ -50,9 +50,10 @@ def Disable_user(modeladmin, request, queryset):
 	queryset.update(active = False)
 
 class UserAdmin(admin.ModelAdmin):
-	search_fields = ('id', 'unique_id', 'username', 'nickname', 'email', )
+	search_fields = ('id', 'unique_id', 'username', 'nickname', 'email', 'addr', )
 	list_display = ('id', 'username', 'nickname', 'warned', 'level', 'staff', 'active', )
-	exclude = ('addr', 'signup_addr', 'password', )
+	#exclude = ('addr', 'signup_addr', 'password', )
+	exclude = ('password', )
 	actions = [Disable_user]
 	#exclude = ('staff', )
 	# Not yet

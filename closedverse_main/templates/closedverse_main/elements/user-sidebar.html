@@ -77,7 +77,7 @@
 {% endif %}
 
       </div>
-		{% elif user.is_me and not general %}
+		{% endif %}{% if user.is_me and not general %}
 		<div id="edit-profile-settings"><a class="button symbol" href="{% url "main:profile-settings" %}">Profile Settings</a></div>
 		{% endif %}{% if user.is_me %}
 		<button class="button" onclick="Olv.Closed.lights()">Toggle Dark Mode</button>

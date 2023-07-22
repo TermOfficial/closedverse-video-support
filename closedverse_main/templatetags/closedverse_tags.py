@@ -12,7 +12,7 @@ def avatar(user, feeling=0):
 @register.simple_tag
 def miionly(mh):
 	if not mh:
-		return settings.STATIC_URL + '/img/anonymous-mii.png'
+		return settings.STATIC_URL + 'img/anonymous-mii.png'
 	else:
 		return 'https://mii-secure.cdn.nintendo.net/{0}_normal_face.png'.format(mh)
 @register.simple_tag

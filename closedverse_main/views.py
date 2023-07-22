@@ -21,6 +21,7 @@ import sys, traceback
 import base64
 import subprocess
 from datetime import datetime
+from django.utils import timezone
 import django.utils.dateformat
 from binascii import hexlify
 from os import urandom
@@ -444,9 +445,21 @@ def user_view(request, username):
 				return json_response("Your e-mail address is invalid. Input an e-mail address, or input nothing.")
 		if User.nnid_in_use(request.POST.get('origin_id'), request):
 			return json_response("That Nintendo Network ID is already in use, that would cause confusion.")
-		if user.has_plain_avatar():
-			user.avatar = request.POST.get('avatar') or ''
-		if request.POST.get('avatar') == '1':
+		#if user.has_plain_avatar():
+		#	user.avatar = request.POST.get('avatar') or ''
+		# custom handler
+		if request.POST.get('avatar') == '2':
+			if request.FILES.get('screen'):
+				if not request.user.has_freedom():
+					return json_response("Not allowed.")
+				upload = None
+				if request.FILES.get('screen'):
+					upload = util.image_upload(request.FILES['screen'], True, avatar=True)
+					if upload == 1:
+						return json_response("sorry, we are racist to the image you uploaded, you have to choose another one")
+				user.avatar = upload
+				user.has_mh = False
+		elif request.POST.get('avatar') == '1':
 			if not request.POST.get('origin_id'):
 				user.has_mh = False
 				profile.origin_id = None
@@ -593,22 +606,22 @@ def user_posts(request, username):
 		#profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
 	
-	if request.GET.get('offset'):
-		posts = user.get_posts(50, int(request.GET['offset']), request)
+	offset = int(request.GET.get('offset', 0))
+	if request.GET.get('offset_time'):
+		offset_time = datetime.fromisoformat(request.GET['offset_time'])
 	else:
-		posts = user.get_posts(50, 0, request)
+		offset_time = timezone.now()
+	
+	posts = user.get_posts(50, offset, request, offset_time)
+	next_offset = None
 	if posts.count() > 49:
-		if request.GET.get('offset'):
-			next_offset = int(request.GET['offset']) + 50
-		else:
-			next_offset = 50
-	else:
-		next_offset = None
+		next_offset = offset + 50
 
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/u-post-list.html', {
 			'posts': posts,
 			'next': next_offset,
+			'time': offset_time.isoformat(),
 		})
 	else:
 		return render(request, 'closedverse_main/user_posts.html', {
@@ -617,6 +630,7 @@ def user_posts(request, username):
 			'posts': posts,
 			'profile': profile,
 			'next': next_offset,
+			'time': offset_time.isoformat(),
 			# Copied from the above, if you change the last ogdata occurrence then change this one
 			'ogdata': {
 				'title': title,
@@ -698,21 +712,21 @@ def user_comments(request, username):
 	if not profile.comments_visible:
 		raise Http404()
 	
-	if request.GET.get('offset'):
-		posts = user.get_comments(50, int(request.GET['offset']), request)
+	offset = int(request.GET.get('offset', 0))
+	if request.GET.get('offset_time'):
+		offset_time = datetime.fromisoformat(request.GET['offset_time'])
 	else:
-		posts = user.get_comments(50, 0, request)
+		offset_time = timezone.now()
+	posts = user.get_comments(20, offset, request, offset_time)
+	next_offset = None
 	if posts.count() > 19:
-		if request.GET.get('offset'):
-			next_offset = int(request.GET['offset']) + 20
-		else:
-			next_offset = 20
-	else:
-		next_offset = None
+		next_offset = offset + 20
+
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/u-post-list.html', {
 			'posts': posts,
 			'next': next_offset,
+			'time': offset_time.isoformat(),
 		})
 	else:
 		return render(request, 'closedverse_main/user_comments.html', {
@@ -721,6 +735,7 @@ def user_comments(request, username):
 			'posts': posts,
 			'profile': profile,
 			'next': next_offset,
+			'time': offset_time.isoformat(),
 		})
 
 def user_following(request, username):
@@ -889,22 +904,22 @@ def community_view(request, community):
 		return HttpResponseForbidden()
 	if not request.user.is_authenticated and communities.require_auth:
 		return render(request, 'com_locked.html')
-	if request.GET.get('offset'):
-		posts = communities.get_posts(50, int(request.GET['offset']), request)
+	offset = int(request.GET.get('offset', 0))
+	if request.GET.get('offset_time'):
+		offset_time = datetime.fromisoformat(request.GET['offset_time'])
 	else:
-		posts = communities.get_posts(50, 0, request)
+		offset_time = timezone.now()
+	
+	posts = communities.get_posts(50, offset, request, offset_time)
+	next_offset = None
 	if posts.count() > 49:
-		if request.GET.get('offset'):
-			next_offset = int(request.GET['offset']) + 50
-		else:
-			next_offset = 50
-	else:
-		next_offset = None
+		next_offset = offset + 50
 
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
 			return render(request, 'closedverse_main/elements/post-list.html', {
 			'posts': posts,
 			'next': next_offset,
+			'time': offset_time.isoformat(),
 		})
 	else:
 		return render(request, 'closedverse_main/community_view.html', {
@@ -913,6 +928,7 @@ def community_view(request, community):
 			'community': communities,
 			'posts': posts,
 			'next': next_offset,
+			'time': offset_time.isoformat(),
 			'ogdata': {
 				'title': communities.name,
 				'description': communities.description,
@@ -1068,7 +1084,7 @@ def post_create(request, community):
 			return json_response({
 			1: "Your post is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
-			3: "You're making posts too fast, wait a few seconds and try again.",
+			3: "You're posting too quickly, wait a few seconds and try again.",
 			4: "Apparently, you're not allowed to post here.",
 			5: "Uh-oh, that URL wasn't valid..",
 			6: "Not allowed.",

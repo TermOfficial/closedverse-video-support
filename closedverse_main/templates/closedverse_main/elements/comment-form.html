@@ -30,6 +30,8 @@
   </div>
 	  {% if user.has_freedom %}
   	  {% file_button %}
+  	  <!-- hack to temporarily hide video input, for now... -->
+			<style>div.file-button-container{display:none;}</style>
 	  {% endif %}
 
   <div class="post-form-footer-options">

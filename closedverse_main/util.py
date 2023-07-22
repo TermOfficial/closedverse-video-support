@@ -103,7 +103,7 @@ def video_upload(video, stream=False):
 	return settings.MEDIA_URL + fname
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
-def image_upload(img, stream=False, drawing=False):
+def image_upload(img, stream=False, drawing=False, avatar=False):
 	if stream:
 		decodedimg = img.read()
 	else:
@@ -135,7 +135,19 @@ def image_upload(img, stream=False, drawing=False):
 			}
 			if orientation in rotations:
 				im = im.transpose(rotations[orientation])
-	im.thumbnail((1280, 1280), Image.ANTIALIAS)
+	if avatar:
+		# crop 1:1 
+		width, height = im.size
+		min_dimension = min(width, height)
+		crop_size = min_dimension
+		left = (width - crop_size) // 2
+		top = (height - crop_size) // 2
+		right = left + crop_size
+		bottom = top + crop_size
+		im = im.crop((left, top, right, bottom))
+		im.thumbnail((256, 256))
+	else:
+		im.thumbnail((1280, 1280))
 	
 	# Let's check the aspect ratio and see if it's crazy
 	# IF this is a drawing

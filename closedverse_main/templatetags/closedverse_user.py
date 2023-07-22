@@ -43,7 +43,7 @@ def user_post(post, type=0):
 	}
 
 @register.inclusion_tag('closedverse_main/elements/u-post-list.html')
-def u_post_list(posts, next_offset=None, type=2, nf_text=''):
+def u_post_list(posts, next_offset=None, type=2, nf_text='', time=None):
 	text = {
 	0: "This user hasn't made any posts yet.",
 	1: "This user hasn't given a Yeah to any posts yet.",
@@ -54,6 +54,7 @@ def u_post_list(posts, next_offset=None, type=2, nf_text=''):
 		'posts': posts,
 		'nf': text,
 		'next': next_offset,
+		'time': time,
 		'type': type,
 	}
 @register.inclusion_tag('closedverse_main/elements/profile-post.html')

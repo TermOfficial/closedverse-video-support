@@ -3445,14 +3445,26 @@ b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
 					}
 				})
 				
-				$('input[name=avatar][value=0]').change(function() {
-						$('.setting-avatar > .icon-container > .nnid-icon.mii').removeClass('none');
-						$('.nnid-icon.gravatar').addClass('none');
-				})
-				$('input[name=avatar][value=1]').change(function() {
-						$('.setting-avatar > .icon-container > .nnid-icon.mii').addClass('none');
-						$('.nnid-icon.gravatar').removeClass('none');
-				})
+				$("input[name=avatar][value=0]").change(function() {
+					$(".setting-avatar > .icon-container > .nnid-icon.mii").removeClass("none");
+					$(".nnid-icon.gravatar").addClass("none");
+					$(".nnid-icon.custom").addClass("none");
+					$("#upload-thing").addClass("none");
+				});
+				$("input[name=avatar][value=1]").change(function() {
+					$(".setting-avatar > .icon-container > .nnid-icon.mii").addClass("none");
+					$(".nnid-icon.custom").addClass("none");
+					$(".nnid-icon.gravatar").removeClass("none");
+					$("#upload-thing").addClass("none");
+				});
+				$("input[name=avatar][value=2]").change(function() {
+					$(".setting-avatar > .icon-container > .nnid-icon.mii").addClass("none");
+					$(".nnid-icon.gravatar").addClass("none");
+					$(".nnid-icon.custom").removeClass("none");
+					$("#upload-thing").removeClass("none");
+				});
+				negroThing($(".settings-list"), true);
+
 				$('.color-thing').click(function(a) {
 					a.preventDefault();
 						$('.color-thing').spectrum({
