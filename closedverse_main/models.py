@@ -954,7 +954,7 @@ class Post(models.Model):
 			elif offset:
 				comments = comments_pre[offset:]
 		else:
-			comments = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)
+			comments_pre = self.comment_set.select_related('creator').annotate(num_yeahs=Count('yeah')).filter(original_post=self).order_by('created').exclude(original_post__community__require_auth=True)
 			comments = comments_pre
 			if limit:
 				comments = comments_pre[offset:offset + limit]
