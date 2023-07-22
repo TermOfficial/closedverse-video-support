@@ -431,11 +431,11 @@ def user_view(request, username):
 		if len(request.POST.get('bg_url')) > 300:
 			return json_response('Background URL is too long (length '+str(len(request.POST.get('bg_url')))+', max 300)')
 		if len(request.POST.get('whatareyou')) > 300:
-			return json_response('Big brother it\'s too big, I can\'t take it! (length '+str(len(request.POST.get('whatareyou')))+', max 300)')
+			return json_response('"What Are You" is too long sorry (length '+str(len(request.POST.get('whatareyou')))+', max 300)')
 		if len(request.POST.get('external')) > 255:
-			return json_response('Big brother it\'s too big, I can\'t take it! (length '+str(len(request.POST.get('external')))+', max 300)')
+			return json_response('"External" (whatever that is i don\'t know in the code) is too long sorry (length '+str(len(request.POST.get('external')))+', max 300)')
 		if len(request.POST.get('email')) > 500:
-			return json_response('Big brother it\'s too big, I can\'t take it! (length '+str(len(request.POST.get('email')))+', max 500)')
+			return json_response('"Email" is too long sorry (length '+str(len(request.POST.get('email')))+', max 500)')
 		# Kinda unneeded but gdsjkgdfsg
 		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region' or request.POST.get('external') == 'DiscordTag':
 			return json_response("I'm laughing right now.")
@@ -1384,9 +1384,8 @@ def user_friendrequest_delete(request, username):
 @login_required
 def user_addblock(request, username):
 	user = get_object_or_404(User, username=username)
-	didwork = user.make_block(request.user)
-	return JsonResponse({'success': didwork})
-	# return HttpResponse() why is this even here???
+	user.make_block(request.user)
+	return HttpResponse()
 
 # Notifications work differently since the Openverse rebranding. (that we changed back)
 # They used to respond with a JSON for values for unread notifications and messages.

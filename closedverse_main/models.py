@@ -428,7 +428,7 @@ class User(models.Model):
 		return True
 	# BLOCK this user from SOURCE
 	def make_block(self, source):
-		if find_block(source, self):
+		if UserBlock.find_block_strict(source, self):
 			return UserBlock.objects.remove(source=source, target=self)
 		return UserBlock.objects.create(source=source, target=self)
 	def get_posts(self, limit, offset, request, offset_time):
@@ -1721,6 +1721,20 @@ class UserBlock(models.Model):
 		#if full:
 		#	return UserBlock.objects.filter(Q(source=first, full=full) & Q(target=second, full=full) | Q(target=first, full=full) & Q(source=second, full=full)).exists()
 		block = UserBlock.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second))
+		if not block.exists():
+			return False
+		if block.first().target == second:
+			# if you are the target....
+			return 2
+		else:
+			return 1
+
+	def find_block_strict(first, second):
+		if not second.is_authenticated:
+			return False
+		#if full:
+		#	return UserBlock.objects.filter(Q(source=first, full=full) & Q(target=second, full=full) | Q(target=first, full=full) & Q(source=second, full=full)).exists()
+		block = UserBlock.objects.filter(Q(source=first) & Q(target=second))
 		if not block.exists():
 			return False
 		if block.first().target == second:
