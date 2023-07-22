@@ -84,7 +84,7 @@ def recaptcha_verify(request, key):
 		return False
 	return True
 
-def video_upload(video, stream=False):
+def video_upload(video):
 	randnum = random.randint(10000, 99999)
 	# only either webm or mp4
 	fname = str(randnum)

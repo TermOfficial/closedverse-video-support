@@ -398,7 +398,8 @@ class User(models.Model):
 			return False
 		return True
 	def can_view(self, user):
-		if UserBlock.find_block(self, user) == 2:
+		block = UserBlock.find_block(self, user)
+		if block and block.target == user:
 			return False
 		return True
 	def is_following(self, me):
@@ -421,15 +422,19 @@ class User(models.Model):
 			return False
 		return self.follow_target.filter(source=source, target=self).delete()
 	def can_block(self, source):
-		if self.can_manage():
+		if self.can_manage() or self.level > 0:
 			return False
 		#if source.profile('moyenne'):
 		#	return False
 		return True
 	# BLOCK this user from SOURCE
 	def make_block(self, source):
-		if UserBlock.find_block_strict(source, self):
-			return UserBlock.objects.remove(source=source, target=self)
+		block = UserBlock.find_block(self, source)
+		if block and block.source == source:
+			return block.delete()
+		fs = Friendship.find_friendship(self, source)
+		if fs:
+			fs.delete()
 		return UserBlock.objects.create(source=source, target=self)
 	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
@@ -1723,25 +1728,7 @@ class UserBlock(models.Model):
 		block = UserBlock.objects.filter(Q(source=first) & Q(target=second) | Q(target=first) & Q(source=second))
 		if not block.exists():
 			return False
-		if block.first().target == second:
-			# if you are the target....
-			return 2
-		else:
-			return 1
-
-	def find_block_strict(first, second):
-		if not second.is_authenticated:
-			return False
-		#if full:
-		#	return UserBlock.objects.filter(Q(source=first, full=full) & Q(target=second, full=full) | Q(target=first, full=full) & Q(source=second, full=full)).exists()
-		block = UserBlock.objects.filter(Q(source=first) & Q(target=second))
-		if not block.exists():
-			return False
-		if block.first().target == second:
-			# if you are the target....
-			return 2
-		else:
-			return 1
+		return block.first()
 
 class AuditLog(models.Model):
 	id = models.AutoField(primary_key=True)

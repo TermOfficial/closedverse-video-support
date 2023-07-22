@@ -53,10 +53,10 @@
 	{% if request.user.can_manage %}
 	<button class="button" data-href="{% url "main:user-tools" user.username %}">User Settings</button>
 	{% endif %}
-	{% if not general and not user.is_me %}
+	{% if not general and not user.is_me and user.can_block %}
 	<div class="report-buttons-content">
 		<!-- for later use <button type="button" class="report-button report-user" data-track-label="user" data-track-action="openReportModal" data-track-category="reportViolator" data-modal-open="#report-violator-page">Report Violation</button> -->
-		<button type="button" class="report-button block-button" data-modal-open="#post-block">Block</button>
+		<button type="button" class="report-button block-button">{% if user.is_blocked %}Unblock{% else %}Block{% endif %}</button>
 	</div>
 	{% endif %}
 </div>
@@ -81,23 +81,16 @@
 </div>
 </div>
 {% endif %}
-<div class="dialog none" id="post-block" data-modal-types="post-block">
+
+{% if user.can_block %}
+<div class="dialog none" data-modal-types="post-block">
 	<div class="dialog-inner">
 		<div class="window">
-			<h1 class="window-title">Block {{ user.nickname }}</h1>
+			<h1 class="window-title">{% if user.is_blocked %}Unblock{% else %}Block{% endif %} {{ user.nickname }}</h1>
 			<div class="window-body">
-				<div id="sidebar-profile-body">
-					<div username="{{ user.username }}" class="icon-container">
-						<a href="/users/{{ user.username }}">
-							<img src="{% avatar user %}" alt="{{ user.nickname }}" class="icon">
-						</a>
-					</div>
-					<a href="/users/{{ user.username }}" class="nick-name">{{ user.username }}</a>
-					<p class="id-name">{{ user.username }}</p>
-				</div>
-				<form method="post" data-action="/users/{{ user.username }}/block">
-					{% csrf_token %}
-					<p class="window-body-content">Really block this user? You won't be able to see each other's posts or profile.</p>
+				{% user_sidebar_info user profile %}
+				<form method="post" data-action="{% url "main:user-addblock" user.username %}">
+					<p class="window-body-content">Really {% if user.is_blocked %}un{% endif %}block this user?{% if not user.is_blocked %} You won't be able to see each other's posts or profile.{% endif %}</p>
 					<div class="form-buttons">
 						<input type="button" class="olv-modal-close-button gray-button" value="No">
 						<input type="submit" value="Yes" class="post-button black-button">
@@ -107,6 +100,7 @@
 		</div>
 	</div>
 </div>
+{% endif %}
 
       </div>
 		{% endif %}{% if user.is_me and not general %}

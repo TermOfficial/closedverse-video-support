@@ -338,68 +338,6 @@ function deleteOption() {
 */
 }
 //!© Nintendo/Hatena 2012-2017 copyright@hatena.com
-function negroThing(b, a) {
-    console.log('negroThing')
-    var e = $("#upload-file"),
-        //h = $("#upload-input"),
-        f = $("#upload-preview"),
-        l = $("#upload-preview-container"),
-        m = $("#image-dimensions"),
-        n = function(a) { console.log('changee')
-            switch (!0) {
-                case void 0 !== a.target.files:
-                    var b = a.target.files;
-                    break;
-                case void 0 !== a.originalEvent.clipboardData:
-                    b = a.originalEvent.clipboardData.files;
-                    break;
-                case void 0 !== a.originalEvent.dataTransfer:
-                    b = a.originalEvent.dataTransfer.files;
-                    break;
-                default:
-                    return
-            }
-            if (!(null === b || 0 > b.length || void 0 === b[0] || 0 > b[0].type.indexOf("image"))) {
-                a.preventDefault();
-                Olv.Form.toggleDisabled($("input.black-button"), !1);
-                f.hide();
-                l.hide();
-                //h.val("");
-                f.attr("src", "");
-                m.text("...");
-                var e = new FileReader,
-                    n = function() {
-                        f.attr("src", e.result);
-                        f.show();
-                        var a = new Image;
-                        a.src = e.result;
-                        var b = function() {
-                            m.text(a.width + " x " + a.height);
-                            a.removeEventListener("load", b)
-                        };
-                        a.addEventListener("load", b);
-                        l.show();
-                        //h.val(e.result.split(";base64,")[1]);
-                        e.removeEventListener("load", n)
-                    };
-                e.addEventListener("load", n);
-                e.readAsDataURL(b[0])
-            }
-        };
-    e.change(n);
-console.log(b)
-    b.on("dragover dragenter", function(a) {
-        a.preventDefault()
-    });
-    b.on("drop paste", n);
-    if (!a) b.on("olv:entryform:post:done", function() {
-        $('image-dimensions').text("PNG, JPEG, and GIF are allowed.");
-        $('upload-preview').hide();
-        $('upload-preview-container').hide();
-        $('upload-preview').attr("src", "");
-        //h.val("")
-    })
-}
 var Olv = Olv || {};
 (function(a, b) {
     b.init || (b.init = a.Deferred(function() {
@@ -1178,6 +1116,9 @@ var Olv = Olv || {};
     }),
     a(document).on("olv:pagechange", function() {
         b.ModalWindowManager.closeAll();
+        if(!Olv.ModalWindowManager._windows.length && $('.mask').length) {
+        	b.ModalWindowManager.toggleMask();
+        }
     }),
     b.ModalWindow = function(b, c) {
         this.element = a(b),
@@ -1889,7 +1830,7 @@ var Olv = Olv || {};
         function f(a) {
             // RESET IMAGE. stuuupid yes but input file elements do NOT persist and ye
             // fix thi??s???
-            $('#image-dimensions').text("PNG and JPEG are allowed.");
+            $('#image-dimensions').text(b.EntryForm.tempPollutionButImageFormAllowedText);
                     $('#upload-preview').hide();
                     $('#upload-preview-container').hide();
                     $('#upload-preview').attr("src", "");
@@ -1931,8 +1872,9 @@ var Olv = Olv || {};
                     h = $("#upload-input"),
                     f = $("#upload-preview"),
                     l = $("#upload-preview-container"),
-                    m = $("#image-dimensions"),
-                    n = function(a) {
+                    m = $("#image-dimensions");
+                    b.EntryForm.tempPollutionButImageFormAllowedText = m.text();
+                var n = function(a) {
                         /*window.anus = a
                         console.log(a)
                         */switch (!0) {
@@ -1982,7 +1924,7 @@ var Olv = Olv || {};
                 });
                 c.on("drop paste", n);
                 c.on("olv:entryform:post:done", function() {
-                    m.text("PNG and JPEG are allowed.");
+                    m.text(b.EntryForm.tempPollutionButImageFormAllowedText);
                     f.hide();
                     l.hide();
                     f.attr("src", "");
@@ -3084,6 +3026,21 @@ mode_post = 0;
             container: ".main-column",
             noReloadOnFollow: !0
         }),
+    $(".block-button").on("click", function(g) {
+        g.preventDefault();
+        window.fr = new b.ModalWindow($("div[data-modal-types=post-block]"));
+        window.fr.open()
+    });
+    $("div[data-modal-types=post-block] input.post-button").on("click", function(g) {
+        g.preventDefault();
+        b.Form.toggleDisabled($(this), true);
+        b.Form.post($("div[data-modal-types=post-block] form").attr("data-action")).done(function() {
+            window.fr.close();
+            b.Form.toggleDisabled($(this), true);
+            b.Net.reload()
+        })
+    });
+    
 		$('.friend-button.create').on('click', function(a) {
 			a.preventDefault()
 			fr = new b.ModalWindow($('div[data-modal-types=post-friend-request]'));fr.open();
@@ -3463,7 +3420,8 @@ b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
 					$(".nnid-icon.custom").removeClass("none");
 					$("#upload-thing").removeClass("none");
 				});
-				negroThing($(".settings-list"), true);
+				// awkward but it should work
+				Olv.EntryForm.setupIdentifiedUserForm($(".settings-list"), {done:function(){}});
 
 				$('.color-thing').click(function(a) {
 					a.preventDefault();
@@ -3643,7 +3601,7 @@ b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
 				$("#drawing").remove();
 				$("input[name=painting]").attr("value", "");
 					}
-					$('#image-dimensions').text("PNG and JPEG are allowed.");
+						$('#image-dimensions').text(Olv.EntryForm.tempPollutionButImageFormAllowedText);
                     $('#upload-preview').hide();
                     $('#upload-preview-container').hide();
                     $('#upload-preview').attr("src", "");

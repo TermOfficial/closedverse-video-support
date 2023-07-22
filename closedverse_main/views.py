@@ -411,6 +411,8 @@ def user_view(request, username):
 	if request.user.is_authenticated:
 		profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
+		user.can_block = user.can_block(request.user)
+		user.is_blocked = UserBlock.find_block(user, request.user) 
 
 	if request.method == 'POST' and request.user.is_authenticated:
 		user = request.user
@@ -431,13 +433,13 @@ def user_view(request, username):
 		if len(request.POST.get('bg_url')) > 300:
 			return json_response('Background URL is too long (length '+str(len(request.POST.get('bg_url')))+', max 300)')
 		if len(request.POST.get('whatareyou')) > 300:
-			return json_response('"What Are You" is too long sorry (length '+str(len(request.POST.get('whatareyou')))+', max 300)')
+			return json_response('"What Are You" is too long (length '+str(len(request.POST.get('whatareyou')))+', max 300)')
 		if len(request.POST.get('external')) > 255:
-			return json_response('"External" (whatever that is i don\'t know in the code) is too long sorry (length '+str(len(request.POST.get('external')))+', max 300)')
+			return json_response('Discord Tag is too long (length '+str(len(request.POST.get('external')))+', max 300)')
 		if len(request.POST.get('email')) > 500:
-			return json_response('"Email" is too long sorry (length '+str(len(request.POST.get('email')))+', max 500)')
+			return json_response('Email is too long (length '+str(len(request.POST.get('email')))+', max 500)')
 		# Kinda unneeded but gdsjkgdfsg
-		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region' or request.POST.get('external') == 'DiscordTag':
+		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region' or request.POST.get('external') == 'Discord Tag':
 			return json_response("I'm laughing right now.")
 		
 		if len(request.POST.get('avatar')) > 255:
@@ -624,11 +626,11 @@ def user_posts(request, username):
 		next_offset = offset + 50
 
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
-			return render(request, 'closedverse_main/elements/u-post-list.html', {
+			return (debug(request, username) if 'HTTP_DIS' in request.META else render(request, 'closedverse_main/elements/u-post-list.html', {
 			'posts': posts,
 			'next': next_offset,
 			'time': offset_time.isoformat(),
-		})
+		}))
 	else:
 		return render(request, 'closedverse_main/user_posts.html', {
 			'user': user,
