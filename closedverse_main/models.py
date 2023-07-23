@@ -103,6 +103,7 @@ class UserManager(BaseUserManager):
 		)
 		user.set_password(password)
 		user.staff = True
+		user.level = 99 # added because some admin funcs are missing otherwise
 		user.save()
 		profile = Profile.objects.model()
 		profile.user = user

@@ -43,7 +43,6 @@ urlpatterns = [
 	url(r'users/'+ username +'/tools/set$', views.user_tools_set, name='user-tools-set'),
 	url(r'users/'+ username +'/tools$', views.user_tools, name='user-tools'),
 	url(r'users/'+ username +'/tools/meta$', views.user_tools_meta, name='user-tools-meta'),
-
 	url(r'users/'+ username +'/block$', views.user_addblock, name='user-addblock'),
 	# Communities
 	url(r'communities.search$', views.community_search, name='community-search'),
