@@ -429,12 +429,16 @@ class User(models.Model):
 		return True
 	# BLOCK this user from SOURCE
 	def make_block(self, source):
+		# trailing
 		block = UserBlock.find_block(self, source)
 		if block and block.source == source:
 			return block.delete()
 		fs = Friendship.find_friendship(self, source)
 		if fs:
 			fs.delete()
+		follow = User.is_following(self, source)
+		if follow:
+			User.unfollow(self, source)
 		return UserBlock.objects.create(source=source, target=self)
 	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
