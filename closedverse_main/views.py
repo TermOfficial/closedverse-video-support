@@ -412,7 +412,7 @@ def user_view(request, username):
 		profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
 		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user) 
+		user.is_blocked = UserBlock.find_block(user, request.user)
 
 	if request.method == 'POST' and request.user.is_authenticated:
 		user = request.user
@@ -613,6 +613,8 @@ def user_posts(request, username):
 	if request.user.is_authenticated:
 		#profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
+		user.can_block = user.can_block(request.user)
+		user.is_blocked = UserBlock.find_block(user, request.user)
 	
 	offset = int(request.GET.get('offset', 0))
 	if request.GET.get('offset_time'):
@@ -662,6 +664,8 @@ def user_yeahs(request, username):
 	if request.user.is_authenticated:
 		#profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
+		user.can_block = user.can_block(request.user)
+		user.is_blocked = UserBlock.find_block(user, request.user)
 
 	if not profile.yeahs_visible:
 		raise Http404()
@@ -716,6 +720,8 @@ def user_comments(request, username):
 	if request.user.is_authenticated:
 		#profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
+		user.can_block = user.can_block(request.user)
+		user.is_blocked = UserBlock.find_block(user, request.user)
 	
 	if not profile.comments_visible:
 		raise Http404()
@@ -760,6 +766,8 @@ def user_following(request, username):
 	if request.user.is_authenticated:
 		#profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
+		user.can_block = user.can_block(request.user)
+		user.is_blocked = UserBlock.find_block(user, request.user)
 
 	if request.GET.get('offset'):
 		following_list = user.get_following(20, int(request.GET['offset']))
@@ -805,6 +813,8 @@ def user_followers(request, username):
 	if request.user.is_authenticated:
 		#profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
+		user.can_block = user.can_block(request.user)
+		user.is_blocked = UserBlock.find_block(user, request.user)
 
 	if request.GET.get('offset'):
 		followers_list = user.get_followers(20, int(request.GET['offset']))
@@ -851,6 +861,8 @@ def user_friends(request, username):
 	if request.user.is_authenticated:
 		#profile.can_friend = profile.can_friend(request.user)
 		user.can_follow = user.can_follow(request.user)
+		user.can_block = user.can_block(request.user)
+		user.is_blocked = UserBlock.find_block(user, request.user)
 
 	if request.GET.get('offset'):
 		friends_list = Friendship.get_friendships(user, 20, int(request.GET['offset']))
