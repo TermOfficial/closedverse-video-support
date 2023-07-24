@@ -1133,6 +1133,7 @@ class Comment(models.Model):
 			return False
 		if self.is_mine(request.user) or UserBlock.find_block(self.creator, request.user):
 			return False
+		return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
 			return True
