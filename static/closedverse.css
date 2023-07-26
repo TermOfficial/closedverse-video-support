@@ -1405,6 +1405,9 @@ span.owner-label {
 .post-permalink-feeling-icon.jack {
   position: relative;
 }
+.post-permalink-feeling-icon.verifiedd {
+  position: relative;
+}
 .post-permalink-feeling-icon.administrator:after {
   content: url("img/administrator.png");
   position: absolute;

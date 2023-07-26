@@ -38,8 +38,6 @@ class ClosedMiddleware(object):
 			if not request.user.is_active() :
 				return HttpResponseForbidden()
 			"""
-			if not request.user.is_active():
-				return HttpResponseForbidden()
 			# If there isn't a request.session
 			if not request.session.get('passwd'):
 				request.session['passwd'] = request.user.password
