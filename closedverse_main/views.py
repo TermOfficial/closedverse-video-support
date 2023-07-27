@@ -264,8 +264,14 @@ def signup_page(request):
 		
 		# forbidden keywords
 		groups = [
-			['admin', 'admln', 'adrnin', 'admn', 'arian', 'kordi', 'windowscj', 'gab', 'gabalt', 'terminal', 'term', 'termy', 'penis', 'nazi', 'hitler', 'hitlre', 'ihtler', 'heil', 'closedverse', 'nigga', 'nigger', 'niger', 'nigga', 'faggot', 'fag', 'kkk', 'smf9', 'dakux', 'dacucks', 'adrian'],
-			['adam'],
+			[
+				'admin', 'admln', 'adrnin', 'admn', 'closedverse',
+				'arian', 'kordi', 'windowscj', 'gab', 'term',
+				'penis', 'nazi', 'hitler', 'hitlre', 'ihtler', 'heil', 'kkk'
+				'nigg', 'niger', 'fag',
+				'smf9', 'dakux', 'dacucks', 'adrian'
+			],
+			['adam', 'nintendotom'],
 			['funny'],
 			['doeggs', 'do_eggs', 'do-eggs', 'do.eggs'],
 		]
@@ -389,6 +395,10 @@ def forgot_passwd(request):
 
 def logout_page(request):
 	"""Password email page / post endpoint."""
+	if not request.user.is_active():
+		r = HttpResponseForbidden("You can't log out while you're inactive. According to me and God, you'll just have to sit here and suffer for now. Go contemplate your actions. You will be redirected to Wario Land 4 momentarily.", content_type='text/plain')
+		r['Refresh'] = '7; url=https://gba.js.org/player#warioland4'
+		return r
 	logout(request)
 	if request.GET.get('next'):
 		return redirect(request.GET['next'])
@@ -408,11 +418,17 @@ def user_view(request, username):
 		title = '{0}\'s profile'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
+	if hasattr(profile, 'is_blocked'):
+		return render(request, 'closedverse_main/user_blocked.html', {
+			'classes': ['profile-top'],
+			'user': user,
+			'profile': profile,
+		})
 	if request.user.is_authenticated:
 		profile.can_friend = profile.can_friend(request.user)
-		user.can_follow = user.can_follow(request.user)
-		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user)
+		#user.can_follow = user.can_follow(request.user)
+		#user.can_block = user.can_block(request.user)
+		#user.is_blocked = UserBlock.find_block(user, request.user)
 
 	if request.method == 'POST' and request.user.is_authenticated:
 		user = request.user
@@ -610,11 +626,12 @@ def user_posts(request, username):
 		title = '{0}\'s posts'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
-	if request.user.is_authenticated:
-		#profile.can_friend = profile.can_friend(request.user)
-		user.can_follow = user.can_follow(request.user)
-		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user)
+	if hasattr(profile, 'is_blocked'):
+		return render(request, 'closedverse_main/user_blocked.html', {
+			'classes': ['profile-top'],
+			'user': user,
+			'profile': profile,
+		})
 	
 	offset = int(request.GET.get('offset', 0))
 	if request.GET.get('offset_time'):
@@ -661,11 +678,12 @@ def user_yeahs(request, username):
 		title = '{0}\'s yeahs'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
-	if request.user.is_authenticated:
-		#profile.can_friend = profile.can_friend(request.user)
-		user.can_follow = user.can_follow(request.user)
-		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user)
+	if hasattr(profile, 'is_blocked'):
+		return render(request, 'closedverse_main/user_blocked.html', {
+			'classes': ['profile-top'],
+			'user': user,
+			'profile': profile,
+		})
 
 	if not profile.yeahs_visible:
 		raise Http404()
@@ -717,11 +735,12 @@ def user_comments(request, username):
 		title = '{0}\'s comments'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
-	if request.user.is_authenticated:
-		#profile.can_friend = profile.can_friend(request.user)
-		user.can_follow = user.can_follow(request.user)
-		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user)
+	if hasattr(profile, 'is_blocked'):
+		return render(request, 'closedverse_main/user_blocked.html', {
+			'classes': ['profile-top'],
+			'user': user,
+			'profile': profile,
+		})
 	
 	if not profile.comments_visible:
 		raise Http404()
@@ -763,11 +782,12 @@ def user_following(request, username):
 		title = '{0}\'s follows'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
-	if request.user.is_authenticated:
-		#profile.can_friend = profile.can_friend(request.user)
-		user.can_follow = user.can_follow(request.user)
-		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user)
+	if hasattr(profile, 'is_blocked'):
+		return render(request, 'closedverse_main/user_blocked.html', {
+			'classes': ['profile-top'],
+			'user': user,
+			'profile': profile,
+		})
 
 	if request.GET.get('offset'):
 		following_list = user.get_following(20, int(request.GET['offset']))
@@ -810,11 +830,12 @@ def user_followers(request, username):
 		title = '{0}\'s followers'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
-	if request.user.is_authenticated:
-		#profile.can_friend = profile.can_friend(request.user)
-		user.can_follow = user.can_follow(request.user)
-		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user)
+	if hasattr(profile, 'is_blocked'):
+		return render(request, 'closedverse_main/user_blocked.html', {
+			'classes': ['profile-top'],
+			'user': user,
+			'profile': profile,
+		})
 
 	if request.GET.get('offset'):
 		followers_list = user.get_followers(20, int(request.GET['offset']))
@@ -858,11 +879,12 @@ def user_friends(request, username):
 		title = '{0}\'s friends'.format(user.nickname)
 	profile = user.profile()
 	profile.setup(request)
-	if request.user.is_authenticated:
-		#profile.can_friend = profile.can_friend(request.user)
-		user.can_follow = user.can_follow(request.user)
-		user.can_block = user.can_block(request.user)
-		user.is_blocked = UserBlock.find_block(user, request.user)
+	if hasattr(profile, 'is_blocked'):
+		return render(request, 'closedverse_main/user_blocked.html', {
+			'classes': ['profile-top'],
+			'user': user,
+			'profile': profile,
+		})
 
 	if request.GET.get('offset'):
 		friends_list = Friendship.get_friendships(user, 20, int(request.GET['offset']))

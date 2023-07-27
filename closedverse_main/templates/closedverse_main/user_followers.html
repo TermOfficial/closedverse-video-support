@@ -1,27 +1,5 @@
 {% extends "closedverse_main/layout.html" %}
 {% block main-body %}{% load closedverse_tags %}{% load closedverse_user %}
-{% if request.user.is_authenticated and user.is_blocked %}
-<div class="no-content"><div class="window-create-new-topic"><p>This user is blocked.</p>
-{% if user.can_block %}<div class="post-buttons-content"><button type="button" class="button" data-modal-open="#post-block">Unblock</button></div>
-<div class="dialog none" id="post-block" data-modal-types="post-block">
-	<div class="dialog-inner">
-		<div class="window">
-			<h1 class="window-title">{% if user.is_blocked %}Unblock{% else %}Block{% endif %} {{ user.nickname }}</h1>
-			<div class="window-body">
-				{% user_sidebar_info user profile %}
-				<form method="post" data-action="{% url "main:user-addblock" user.username %}">
-					<p class="window-body-content">Really {% if user.is_blocked %}un{% endif %}block this user?{% if not user.is_blocked %} You won't be able to see each other's posts or profile.{% endif %}</p>
-					<div class="form-buttons">
-						<input type="button" class="olv-modal-close-button gray-button" value="No">
-						<input type="submit" value="Yes" class="post-button black-button">
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
-</div>
-{% endif %}
-{% else %}
 {% user_sidebar request user profile 5 %}
 <div class="main-column"><div class="post-list-outline">
     <h2 class="label">{{ title }}</h2>
@@ -37,5 +15,4 @@
 {% endif %}
 
 </div></div>
-{% endif %}
 {% endblock %}

@@ -30,10 +30,10 @@
       </a>
 	  {% endif %}
 	{% user_sidebar_info user profile %}
-{% if request.user.is_authenticated and not user.is_me and profile.can_friend or user.can_follow or request.user.can_manage %}
+{% if request.user.is_authenticated and not user.is_me and profile.can_friend or profile.can_follow or request.user.can_manage %}
       <div class="user-action-content">
 <div class="toggle-button">
-	{% if user.can_follow and not user.is_me %}
+	{% if profile.can_follow and not user.is_me %}
     <button type="button" data-action="{% url "main:user-follow" user.username %}" class="follow-button button symbol{% if user.is_following %} none{% endif %}">Follow</button>
     <button type="button" data-action="{% url "main:user-unfollow" user.username %}" class="unfollow-button button symbol{% if not user.is_following %} none{% endif %}" data-screen-name="{{ user.nickname }}">Follow</button>
   {% endif %}
@@ -53,10 +53,10 @@
 	{% if request.user.can_manage %}
 	<button class="button" data-href="{% url "main:user-tools" user.username %}">User Settings</button>
 	{% endif %}
-	{% if not general and not user.is_me and user.can_block %}
+	{% if not general and not user.is_me and profile.can_block %}
 	<div class="report-buttons-content">
 		<!-- for later use <button type="button" class="report-button report-user" data-track-label="user" data-track-action="openReportModal" data-track-category="reportViolator" data-modal-open="#report-violator-page">Report Violation</button> -->
-		<button type="button" class="report-button block-button">{% if user.is_blocked %}Unblock{% else %}Block{% endif %}</button>
+		<button type="button" class="report-button block-button">{% if profile.is_blocked %}Unblock{% else %}Block{% endif %}</button>
 	</div>
 	{% endif %}
 </div>
@@ -82,25 +82,7 @@
 </div>
 {% endif %}
 
-{% if user.can_block %}
-<div class="dialog none" data-modal-types="post-block">
-	<div class="dialog-inner">
-		<div class="window">
-			<h1 class="window-title">{% if user.is_blocked %}Unblock{% else %}Block{% endif %} {{ user.nickname }}</h1>
-			<div class="window-body">
-				{% user_sidebar_info user profile %}
-				<form method="post" data-action="{% url "main:user-addblock" user.username %}">
-					<p class="window-body-content">Really {% if user.is_blocked %}un{% endif %}block this user?{% if not user.is_blocked %} You won't be able to see each other's posts or profile.{% endif %}</p>
-					<div class="form-buttons">
-						<input type="button" class="olv-modal-close-button gray-button" value="No">
-						<input type="submit" value="Yes" class="post-button black-button">
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
-</div>
-{% endif %}
+{% block_modal user profile %}
 
       </div>
 		{% endif %}{% if user.is_me and not general %}

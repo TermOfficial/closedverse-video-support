@@ -437,9 +437,8 @@ class User(models.Model):
 		fs = Friendship.find_friendship(self, source)
 		if fs:
 			fs.delete()
-		follow = User.is_following(self, source)
-		if follow:
-			User.unfollow(self, source)
+		# delete any mutual follows
+		Follow.objects.filter(Q(source=self) & Q(target=source) | Q(target=self) & Q(source=source)).delete()
 		return UserBlock.objects.create(source=source, target=self)
 	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
@@ -913,7 +912,7 @@ class Post(models.Model):
 		else:
 			return False
 	def can_yeah(self, request):
-		if not request.user.is_authenticated:
+		if not request.user.is_authenticated or not request.user.is_active():
 			return False
 		# why did cedar-django do this? god knows
 		#return True
@@ -1129,7 +1128,7 @@ class Comment(models.Model):
 		else:
 			return False
 	def can_yeah(self, request):
-		if not request.user.is_authenticated:
+		if not request.user.is_authenticated or not request.user.is_active():
 			return False
 		if self.is_mine(request.user) or UserBlock.find_block(self.creator, request.user):
 			return False
@@ -1313,6 +1312,14 @@ class Profile(models.Model):
 		self.origin_id_public = self.origin_id_public(request.user)
 		self.yeahs_visible = self.yeahs_visible(request.user)
 		self.comments_visible = self.comments_visible(request.user)
+		if request.user != self.user:
+			# these aren't on the user object so arguably these should not be here
+			# but at this point i do not care just throw away this whole codebase please
+			self.can_follow = self.user.can_follow(request.user)
+			self.can_block = self.user.can_block(request.user)
+			# we will use hasattr
+			if UserBlock.objects.filter(source=request.user, target=self.user).exists():
+				self.is_blocked = True
 
 class Follow(models.Model):
 	# Todo: remove this

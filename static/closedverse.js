@@ -2167,12 +2167,13 @@ var Olv = Olv || {};
                     okLabel: b.loc("olv.portal.button.remove"),
                     modalTypes: "unfollow"
                 });
-                f.done(function(a) {
-                    a && b.Form.post(d.attr("data-action"), null, d).done(function() {
+                f.done(function(k) {
+                    k && b.Form.post(d.attr("data-action"), null, d).done(function(l) {
                         // Maybe don't use the b.Net.reload() here
 						d.hasClass("relationship-button") ? b.Net.reload() : (d.addClass("none"),
                         e.removeClass("none"),
                         b.Form.toggleDisabled(e, !1))
+                        "following_count" in l && a(e).trigger("olv:visitor:following-count:change", [l.following_count])
                     })
                 }),
                 c.preventDefault()
@@ -3020,7 +3021,7 @@ mode_post = 0;
             b.Form.toggleDisabled(a(c.target), !0)
         }
         function g(b, c) {
-            a("#user-content.is-visitor").length && a("#js-following-count").text(c)
+            /*a("#user-content.is-visitor").length && */a(".test-follower-count").text(c)
         }
         b.User.setupFollowButton(e, {
             container: ".main-column",

@@ -85,21 +85,23 @@ def recaptcha_verify(request, key):
 	return True
 
 def video_upload(video):
-	randnum = random.randint(10000, 99999)
+	hash = sha1()
+	for chunk in video.chunks():
+		hash.update(chunk)
+	imhash = hash.hexdigest()
 	# only either webm or mp4
-	fname = str(randnum)
 	extension = video.name[-4:]
 	if extension == '.mp4':
-		fname = fname + '.mp4'
+		fname = imhash + '.mp4'
 	elif extension == 'webm':
-		fname = fname + '.webm'
+		fname = imhash + '.webm'
 	else:
 		return 1
-	# this check makes no sense, why would a file with a random name exist?
-	#if not os.path.exists(settings.MEDIA_ROOT + fname):
-	with open(settings.MEDIA_ROOT + fname, "wb+") as destination:
-		for chunk in video.chunks():
-			destination.write(chunk)
+	# simply only write image if the hashed path doesn't already exist
+	if not os.path.exists(settings.MEDIA_ROOT + fname):
+		with open(settings.MEDIA_ROOT + fname, "wb+") as destination:
+			for chunk in video.chunks():
+				destination.write(chunk)
 	return settings.MEDIA_URL + fname
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -156,7 +158,13 @@ def image_upload(img, stream=False, drawing=False, avatar=False):
 	
 	# I know some people have aneurysms when they see people actually using SHA1 in the real world, for anything in general.
 	# Yes, we are really using it. Sorry if that offends you. It's just fast and I don't feel I need anything more random, since we are talking about IMAGES.
-	imhash = sha1(im.tobytes()).hexdigest()
+	if stream:
+		hash = sha1()
+		for chunk in img.chunks():
+			hash.update(chunk)
+		imhash = hash.hexdigest()
+	else:
+		imhash = sha1(im.tobytes()).hexdigest()
 	# File saving target
 	target = 'png'
 	if stream:

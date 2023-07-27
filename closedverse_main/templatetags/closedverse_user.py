@@ -29,6 +29,12 @@ def user_sidebar_info(user, profile=None):
 		'user': user,
 		'profile': profile,
 	}
+@register.inclusion_tag('closedverse_main/elements/block-modal.html')
+def block_modal(user, profile):
+	return {
+		'user': user,
+		'profile': profile,
+	}
 @register.inclusion_tag('closedverse_main/elements/fr-accept.html')
 def fr_accept(fr):
 	return {
