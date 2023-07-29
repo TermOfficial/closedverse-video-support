@@ -24,17 +24,13 @@ class ClosedMiddleware(object):
 		# Fix this ; put something in settings signifying if the server supports HTTPS or not
 		#if not request.is_secure() and (not settings.DEBUG) and settings.CLOSEDVERSE_PROD:
 			# Let's try to redirect to HTTPS for non-Nintendo stuff.
-			if not request.META.get('HTTP_USER_AGENT'):
-				return HttpResponseForbidden("You need a user agent.", content_type='text/plain')
-			if not request.is_secure() and not 'Nintendo' in request.META['HTTP_USER_AGENT']:
-				return redirect('https://{0}{1}'.format(request.get_host(), request.get_full_path()))
+		"""
+		if not request.META.get('HTTP_USER_AGENT'):
+			return HttpResponseForbidden("You need a user agent.", content_type='text/plain')
+		if settings.CLOSEDVERSE_PROD not request.is_secure() and not 'Nintendo' in request.META['HTTP_USER_AGENT']:
+			return redirect('https://{0}{1}'.format(request.get_host(), request.get_full_path()))
+		"""
 		if request.user.is_authenticated:
-			""" User active; this doesn't work at the moment due to Postgres not being able to change bools to ints
-			if request.user.is_active() == 0:
-				return HttpResponseForbidden()
-			elif request.user.is_active() == 2:
-				return redirect(settings.inactive_redirect)
-			"""
 			# can just forbid post requests for the time being (but leav our funny logout message :3)
 			if not request.user.is_active() and request.method != 'GET' and request.get_full_path() != '/logout/':
 				return HttpResponseForbidden()

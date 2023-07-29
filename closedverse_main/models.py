@@ -1317,7 +1317,7 @@ class Profile(models.Model):
 		self.origin_id_public = self.origin_id_public(request.user)
 		self.yeahs_visible = self.yeahs_visible(request.user)
 		self.comments_visible = self.comments_visible(request.user)
-		if request.user != self.user:
+		if request.user.is_authenticated and request.user != self.user:
 			# these aren't on the user object so arguably these should not be here
 			# but at this point i do not care just throw away this whole codebase please
 			self.can_follow = self.user.can_follow(request.user)
