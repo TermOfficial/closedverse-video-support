@@ -24,7 +24,6 @@ urlpatterns = [
 	url(r'reset/$', views.forgot_passwd, name='forgot-passwd'),
 	url(r'logout/$', views.logout_page, name='logout'),
 	# User pages
-	url(r'users/'+ username +'/manager$', views.user_manager, name='user-manager'),
 	url(r'users/'+ username +'/follow$', views.user_follow, name='user-follow'),
 	url(r'users/'+ username +'/unfollow$', views.user_unfollow, name='user-unfollow'),
 	url(r'users/'+ username +'$', views.user_view, name='user-view'),
@@ -48,7 +47,7 @@ urlpatterns = [
 	url(r'communities.search$', views.community_search, name='community-search'),
 	url(r'communities/'+ community +'$', views.community_view, name='community-view'),
 	url(r'communities/favorites$', views.community_favorites, name='community-favorites'),
-	url(r'communities/all$', views.community_all, name='community-viewall'),
+	url(r'communities/categories/(?P<category>[a-z]+)$', views.community_all, name='community-viewall'),
 	url(r'communities/(?P<tag>[a-z]+)$', views.special_community_tag, name='special-community-tag'),
 	url(r'communities/'+ community +'/favorite$', views.community_favorite_create, name='community-favorite-add'),
 	url(r'communities/'+ community +'/favorite_rm$', views.community_favorite_rm, name='community-favorite-rm'),
@@ -81,7 +80,6 @@ urlpatterns = [
 	url(r'alive$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
-	url(r'notifications/set_read$', views.notification_setread, name='set-read'),
 	url(r'notifications/(?P<notification>'+ uuidr +'+)\.rm$', views.notification_delete, name='notification-delete'),
 	
 	# User meta + messages
@@ -112,14 +110,6 @@ urlpatterns = [
 	#url(r'help/approval/?$', views.help_approval, name='help-approval'),
 	url(r'why/?$', views.help_why, name='help-why'),
 	
-	# Manage
-	url(r'man/?$', views.admin_index, name='admin-index'),
-	url(r'man/users$', views.admin_users, name='admin-users'),
-	url(r'man/users_list$', views.users_list, name='users-list'),
-	
-	
-	# "API"
-	url(r'posts.json$', views.post_list, name='post-list'),
 
 	# Util, right now we are away from the primary appo
 	url(r'origin$', views.origin_id, name='origin-id-get'),

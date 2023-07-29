@@ -435,7 +435,9 @@ var Olv = Olv || {};
             if(ass.includes(location.origin)) {
 			    $('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>Link Redirection</h1><div class=window-body><p class=window-body-content>Are you sure you want to go to <b>'+ass+'</b> on this site?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.go(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
             } else {
-                $('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>You are now leaving Closedverse.</h1><div class=window-body><p class=window-body-content>You are now exiting the closedverse website.<br>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
+            		// might not always be there but eh it'll work
+            		var brand_name = $('meta[name="apple-mobile-web-app-title"]').attr('content');
+                $('#container').prepend('<div class="dialog linkc none"><div class=dialog-inner><div class=window><h1 class=window-title>You are now leaving '+brand_name+'.</h1><div class=window-body><p class=window-body-content>You are now exiting the '+brand_name+' website.<br>Are you sure you want to visit <b>'+ass+'</b>?</p><div class=form-buttons><button class="olv-modal-close-button gray-button" type=button data-event-type=ok onclick="$(\'.linkc\').remove()">No</button><button class="olv-modal-close-button black-button" type=button onclick="Olv.Net.lo(\''+ass+'\');$(\'.linkc\').remove()">Yes</button></div></div></div></div></div>');
             }
 			var g = new Olv.ModalWindow($('.linkc'));g.open();
 		},
@@ -2468,21 +2470,9 @@ var Olv = Olv || {};
 			b.Net.go($(this).attr('action') + '?'+$(this).serialize())
 		})
     }),
-    b.router.connect("^/communities/all$", function(c, d, e) {
+  b.router.connect("^/communities/categories/[^\/]+$", function(c, d, e) {
 		b.Closed.changesel("community");
-		gsl = function(e) {
-			e.preventDefault();
-			$('.community-switcher-tab.selected').removeClass('selected');
-			$(this).addClass('selected');
-			cl = $(this).attr('class').split(' ')[1],
-			$('.' + cl).removeClass('none')
-			$('.communities:not(.none):not(.'+ cl +')').addClass('none')
-		}
-        $('.community-switcher-tab.gen').on('click',gsl),
-		$('.community-switcher-tab.game').on('click',gsl),
-		$('.community-switcher-tab.special').on('click',gsl);
-		$('.community-switcher-tab.usr').on('click',gsl);
-    }),
+  }),
 	b.router.connect("^/communities.search$", function(c) {
 		$('form.search').on('submit', function(s) {
 			s.preventDefault();
@@ -2503,7 +2493,6 @@ var Olv = Olv || {};
 	}),
 	b.router.connect('/notifications/friend_requests(\/)?$', function(a, c, d) {
 		b.Closed.changesel("news");
-		b.Form.post("/notifications/set_read?fr=1")
 		$('.received-request-button').on('click', function(a) {
 			a.preventDefault()
 			fr = new b.ModalWindow($('div[data-modal-types=accept-friend-request][uuid='+ $(this).parent().parent().attr('id') +']'));fr.open();
@@ -3185,7 +3174,7 @@ mode_post = 0;
 											icon.attr('src', '');
 										} else {
 											icon.removeClass('none');
-											icon.attr('src', 'https://mii-secure.cdn.nintendo.net/' + a + '_happy_face.png');
+											icon.attr('src', inp.attr('data-mii-domain') + a + '_happy_face.png');
 										}
 										$('input[name=mh]').val(a);
 									}, error: function(a) {
@@ -3241,91 +3230,7 @@ mode_post = 0;
 			});
 		})
 	}),
-		b.router.connect("^/man/?$", function(c, d, e) {
-			$('li.setting-pruge1 > form > button').click(function(a) {
-				a.preventDefault();
-				if(confirm("Really? This is PERMANENT!!!!!!!!")) {
-					Olv.Form.post(location.href, $('li.setting-pruge1 > form').serializeArray()).done(function(response) {
-						Olv.showMessage('', response);
-					});
-				}
-			});
-			$('li.setting-pruge2 > form > button').click(function(a) {
-				a.preventDefault();
-				if(confirm("Really? This is recoverable.")) {
-					Olv.Form.post(location.href, $('li.setting-pruge2 > form').serializeArray()).done(function(response) {
-						Olv.showMessage('', response);
-					});
-				}
-			});
-			$('li.setting-pruge3 > form > button').click(function(a) {
-				a.preventDefault();
-				if(confirm("Really? Friendships can't be recovered.")) {
-					Olv.Form.post(location.href, $('li.setting-pruge3 > form').serializeArray()).done(function(response) {
-						Olv.showMessage('', response);
-					});
-				}
-			});
-			$('li.setting-pruge4 > form > button').click(function(a) {
-				a.preventDefault();
-				if(confirm("Really? This is permanent.")) {
-					Olv.Form.post(location.href, $('li.setting-pruge4 > form').serializeArray()).done(function(response) {
-						Olv.showMessage('', response);
-					});
-				}
-			});
-			$('li.setting-pruge5 > form > button').click(function(a) {
-				a.preventDefault();
-				if(confirm("Really? This is permanent.")) {
-					Olv.Form.post(location.href, $('li.setting-pruge5 > form').serializeArray()).done(function(response) {
-						Olv.showMessage('', response);
-					});
-				}
-			});
-			$('li.setting-unpurge1 > form > button').click(function(a) {
-				a.preventDefault();
-				if(confirm("Really? This is permanent.")) {
-					Olv.Form.post(location.href, $('li.setting-unpurge1 > form').serializeArray()).done(function(response) {
-						Olv.showMessage('', response);
-					});
-				}
-			});
-		}),
-    	b.router.connect("^/man/users$", function(c, d, e) {
-			function openUserModal(user) {
-				$('#user-man-template > div > div > h1.window-title').text('Manage "' + user.username + '"');
-				$('div.user-info').html(user.html);
-				$('input[name=username]').val(user.username);
-				$('input[name=email]').val(user.email);
-				$('input[name=addr]').val(user.addr);
-				$('form.goodform').attr('data-action', user.manager);
-				if(user.is_active) {
-					$('input[name=active]').prop('checked', true);
-				} else {
-					$('input[name=active]').prop('checked', false);
-				}
-				
-				var g = new b.ModalWindow($('#user-man-template'));g.open();
-				$('form.goodform').submit(function(a) {
-					a.preventDefault();
-					//alert('doing it');
-					b.Form.post($('form.goodform').attr('data-action'), $('form.goodform').serializeArray()).done(g.close());
-				})
-			}
-		b.Form.get('/man/users_list' + location.search).done(function(a) {
-			$('.user-loads').html(a);
-			b.Content.autopagerize('#user-man-list', e);
-			$('button.user-manage').on('click',function() {
-				NProgress.start();
-				b.Form.get($(this).parent().parent().attr('data-action')).done(function(a) {
-					NProgress.done();
-					openUserModal(a);
-					b.print(a);
-				});
-			});
-		});
-	}),
-b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
+	b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
         function f(c) {
             var d = a(this)
               , e = d.closest("form");
@@ -3386,7 +3291,7 @@ b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
 									if(a == '') {
 										$('.nnid-icon.mii').attr('src', '');
 									} else {
-										$('.nnid-icon.mii').attr('src', 'https://mii-secure.cdn.nintendo.net/' + a + '_normal_face.png');
+										$('.nnid-icon.mii').attr('src', inp.attr('data-mii-domain') + a + '_normal_face.png');
 									}
 									$('input[name=mh]').val(a);
 								}, error: function(a) {
@@ -3463,8 +3368,13 @@ b.router.connect("^/users/[^\/]+/(tools)$", function(c, d, e) {
             var d = a(this)
               , e = d.closest("form");
             b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
-            b.Form.submit(e, d).done(function(a) {
+            b.Form.submit(e, d).done(function() {
                 b.Net.reload()
+                var updateAvatar = function() {
+                	a('#global-menu-mymenu .icon-container img').attr('src', a('#sidebar-profile-body .icon').attr('src'));
+                	a(document).off("pjax:complete", updateAvatar);
+                }
+                a(document).on("pjax:complete", updateAvatar);
             }))
         }
         function g(c) {

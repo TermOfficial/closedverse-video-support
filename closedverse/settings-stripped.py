@@ -296,6 +296,9 @@ image_delete_opt = 0
 # age (minimal 13 due to C.O.P.P.A)
 age_allowed = "13"
 
+# brand name currently being implemented throughout templates
+brand_name = "Closedverse"
+
 # This option enables some production-specific pages
 # and routines, such as HTTPS scheme redirection and
 # proxy detection via IPHub.

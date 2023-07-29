@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from datetime import timedelta, datetime, date, time
 from passlib.hash import bcrypt_sha256
 from closedverse import settings
+from closedverse_main.context_processors import brand_name
 from . import util
 from random import getrandbits
 import uuid, json, base64
@@ -151,6 +152,10 @@ class ColorField(models.CharField):
 		kwargs['max_length'] = 18
 		super(ColorField, self).__init__(*args, **kwargs)
 		
+#mii_domain = 'https://mii-secure.cdn.nintendo.net'
+# as of writing, mii-secure is unstable, nintendo please do not f*ck me for this
+mii_domain = 'https://s3.us-east-1.amazonaws.com/mii-images.account.nintendo.net/'
+
 class User(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
@@ -373,7 +378,7 @@ class User(models.Model):
 			4: 'frustrated',
 			5: 'puzzled',
 			}.get(feeling, "normal")
-			url = 'https://mii-secure.cdn.nintendo.net/{0}_{1}_face.png'.format(self.avatar, feeling)
+			url = '{2}{0}_{1}_face.png'.format(self.avatar, feeling, mii_domain)
 			return url
 		elif not self.avatar:
 			return settings.STATIC_URL + 'img/anonymous-mii.png'
@@ -624,11 +629,11 @@ class User(models.Model):
 			'contact': request.build_absolute_uri(reverse('main:help-contact')),
 			'link': request.build_absolute_uri(reverse('main:forgot-passwd')) + "?token=" + base64.urlsafe_b64encode(bytes(self.password, 'utf-8')).decode(),
 		})
-		subj = 'Closedverse password reset for "{0}"'.format(self.username)
+		subj = '{1} password reset for "{0}"'.format(self.username, brand_name)
 		return send_mail(
 		subject=subj, 
 		html_message=htmlmsg,
-		from_email="Closedverse not Openverse <{0}>".format(settings.DEFAULT_FROM_EMAIL),
+		from_email="{1} <{0}>".format(settings.DEFAULT_FROM_EMAIL, brand_name),
 		recipient_list=[self.email],
 		fail_silently=False)
 	def find_related(self):
@@ -1774,19 +1779,6 @@ class AuditLog(models.Model):
 		else:
 			return False
 
-# TODO: MAKE THIS ACTUALLY WORK
-class Restriction(models.Model):
-	id = models.AutoField(primary_key=True)
-	created = models.DateTimeField(auto_now_add=True)
-	type = models.SmallIntegerField(choices=((0, "Prevent yeah"), (1, "Prevent follow"), (2, "Prevent comment"), ))
-	post = models.ForeignKey(Post, related_name='restriction_post', null=True, on_delete=models.CASCADE)
-	comment = models.ForeignKey(Comment, related_name='restriction_comment', null=True, on_delete=models.CASCADE)
-	user = models.ForeignKey(User, related_name='restriction_user', null=True, on_delete=models.CASCADE)
-	by = models.ForeignKey(User, related_name='restriction_by', on_delete=models.CASCADE)
-	
-	def __str__(self):
-		return "Restrict " + str(self.user) + " on " + self.get_type_display() + " at " + str(self.created)
-
 class UserRequest(User):
 	# USER AGENT
 	ua = models.TextField(default='', null=True, blank=True)
@@ -1865,7 +1857,7 @@ class ProfileHistory(models.Model):
 	created = models.DateTimeField(auto_now_add=True)
 	user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
 	old_nickname = models.CharField(max_length=64, blank=True, null=True)
-	new_nickname = models.CharField(max_length=64, blank=True)
+	new_nickname = models.CharField(max_length=64, blank=True, null=True)
 	old_comment = models.TextField(blank=True, null=True)
 	new_comment = models.TextField(blank=True)
 	

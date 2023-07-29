@@ -22,7 +22,7 @@
         <p class="settings-label">Profile comment</p>
         <textarea class="textarea" name="profile_comment" maxlength="2200" placeholder="Write about yourself here.">{{ profile.comment }}</textarea>
 
-        <p class="note">Anything you write here will appear on your profile. Remember to keep it brief. Please don't write anything that'll violate <a href="{% url "main:help-rules" %}">Closedverse's rules</a>.</p>
+        <p class="note">Anything you write here will appear on your profile. Remember to keep it brief. Please don't write anything that'll violate <a href="{% url "main:help-rules" %}">{{ brand_name }}'s rules</a>.</p>
       </li>
 	  <!--
       <li>
@@ -207,7 +207,7 @@
                 <div class="icon-container">
                     <img class="icon nnid-icon mii" src="{% miionly user.mh %}">
                 </div>
-                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not profile.origin_id %} (None){% endif %}" value="{% if profile.origin_id %}{{ profile.origin_id }}{% endif %}" data-action="https://nnidlt.murilo.eu.org/api.php?output=hash_only&env=production&user_id=">
+                  <input type="text" name="origin_id" minlength="6" maxlength="16" placeholder="Nintendo Network ID{% if not profile.origin_id %} (None){% endif %}" value="{% if profile.origin_id %}{{ profile.origin_id }}{% endif %}" data-mii-domain="{{ mii_domain }}" data-action="{{ mii_endpoint }}">
 				  <input type="hidden" name="mh" value="{{ user.mh }}">
                 <p class="error"></p>
                 <p class="note">Enter your Nintendo Network ID here. It'll appear on your profile if you set it to be visible.</p>

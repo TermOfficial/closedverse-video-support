@@ -7,11 +7,11 @@
 		<form action="{% url "main:community-search" %}" class="search">
 			<input maxlength="32" name="query" placeholder="Search all communities" type="text"><input title="Search" type="submit" value="q">
 		</form>
-		<div class="close-announce-container">
+		<!--<div class="close-announce-container">
 			<div class="close-announce-link">
 				<a class="title" id="close-text-ann" href="/posts/1186"><b>Closedverse is still in indefinite maintenance.</b></a>
 			</div>
-		</div>
+		</div>-->
 		
 		{% if user.is_warned %}
 		<div class="notice" style="background-color: #ffc783;border: 1px solid #ffb358;">
@@ -45,7 +45,7 @@
 		
 	{% if availablemes and not request.user.is_authenticated %}
 	<div class="post-list-outline index-memo">
-		<h2 class="label">Welcome to Closedverse!</h2>
+		<h2 class="label">Welcome to {{ brand_name }}!</h2>
 		{% for welmes in welmes %}
 		<h2>{{ welmes.Title }}</h2>
 		<p>{{ welmes.message|linebreaksbr|urlize }}</p>
@@ -89,12 +89,12 @@
 			{% community_page_element game "Game Communities" %}
 			{% community_page_element special "Special Communities" %}
 			{% community_page_element user_communities "User owned Communities" %}
-			<a href="{% url "main:community-viewall" %}" class="big-button">Show more</a>
+			<a href="{% url "main:community-viewall" "gen" %}" class="big-button">Show more</a>
 	</div>
 	<div id="community-guide-footer">
 		<div id="guide-menu">
 			<a class="arrow-button" href="{% url "main:help-why" %}"><span>Why join?</span></a>
-			<a class="arrow-button" href="{% url "main:help-rules" %}"><span>Closedverse Rules</span></a>
+			<a class="arrow-button" href="{% url "main:help-rules" %}"><span>{{ brand_name }} Rules</span></a>
 			<a class="arrow-button" href="{% url "main:help-faq" %}"><span>Frequently Asked Questions (FAQ)</span></a>
 			<a class="arrow-button" href="{% url "main:what-ads" %}"><span>What are user-generated ads?</span></a>
 			{% if settings.CLOSEDVERSE_PROD %}
