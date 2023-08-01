@@ -728,8 +728,9 @@ class Community(models.Model):
 			5: 'pc',
 			6: 'xbox',
 			7: 'ps',
+			8: 'youre-mom',
 			}.get(self.platform)
-		if thing == "":
+		if not thing:
 			return None
 		return "img/platform-tag-" + thing + ".png"
 	def is_activity(self):
