@@ -41,6 +41,9 @@ class ClosedMiddleware(object):
 				if request.session['passwd'] != request.user.password:
 					logout(request)
 		response = self.get_response(request)
+		if request.user.is_authenticated:
+			# for reverse proxy
+			response['X-Username'] = request.user.username
 
 		return response
 

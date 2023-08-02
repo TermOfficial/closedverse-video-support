@@ -1,6 +1,6 @@
-# Todo: move all requests to using requests instead of urllib3
 import urllib.request, urllib.error
-import requests
+# requests is only used for get_mii which is not being used currently
+#import requests
 #from lxml import etree
 from random import choice
 import json
@@ -42,6 +42,9 @@ def HumanTime(date, full=False):
 					unit_name += 's'
 				return f'{number_of_units} {unit_name} ago'
 
+# the current source as of now uses AJAX to get mii data
+# this makes it work on pythonanywhere so this is being commented for now
+"""
 def get_mii(id):
 	# Using AccountWS
 	dmca = {
@@ -59,7 +62,7 @@ def get_mii(id):
 	mii = requests.get('https://accountws.nintendo.net/v1/api/miis?pids=' + pid, headers=dmca)
 	try:
 		mii_dec = etree.fromstring(mii.content)
-	# Can't be fucked to put individual exceptions to catch here
+	# Can't be bothered to handle individual exceptions here
 	except:
 		return False
 	del(mii)
@@ -73,7 +76,7 @@ def get_mii(id):
 	
 	# Also todo: Return the NNID based on what accountws returns, not the user's input!!!
 	return [miihash, screenname, nnid]
-
+"""
 
 def recaptcha_verify(request, key):
 	if not request.POST.get('g-recaptcha-response'):
@@ -240,9 +243,13 @@ def getipintel(addr):
 """
 # Now using iphub
 def iphub(addr):
+	# hack to exclude my private network at the time (security flaw?)
 	if settings.IPHUB_KEY and not '192.168' in addr:
-		get = requests.get('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.IPHUB_KEY})
-		if get.json()['block'] == 1:
+		req = urllib.request.Request('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.IPHUB_KEY})
+		response = urllib.request.urlopen(req)
+		data = response.read().decode()
+		get_r = json.loads(data)
+		if get_r.get('block', 0) == 1:
 			return True
 		else:
 			return False

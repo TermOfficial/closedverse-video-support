@@ -12,7 +12,8 @@
 		</div>
 		{% endif %}
 		<div class="post-list-outline">
-		<h2 class="label">{{ community.name }}:</h2>
+		<!-- I don't think Miiverse had this? -->
+		<h2 class="label">{{ community.name }}</h2>
 		{% if request.user.is_authenticated and community.post_perm %}
 		{% post_form request.user community %}
 		{% endif %}

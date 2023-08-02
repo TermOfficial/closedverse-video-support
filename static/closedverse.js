@@ -947,7 +947,7 @@ var Olv = Olv || {};
     b.router.connect("", b.Form.setupForPage),
     b.Guest = {
         isGuest: function() {
-            return a("main-body").hasClass("guest")
+            return a("#main-body").hasClass("guest")
         }
     },
     b.DecreasingTimer = function(a, b, c) {
@@ -2263,7 +2263,9 @@ var Olv = Olv || {};
         b.Global.setupMyMenu()
 	}),
     b.init.done(function(a) {
-        if (a("#global-menu-news").length) {
+    		// don't check notifications if there's no news icon
+    		// why didn't this always use isGuest but now it does
+        if (a("#global-menu-news").length && !Olv.Guest.isGuest()) {
             a("#global-menu-news > a").on("click", function(b) {
                 a(b.currentTarget).find(".badge").hide()
             });

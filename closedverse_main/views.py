@@ -644,11 +644,11 @@ def user_posts(request, username):
 		next_offset = offset + 50
 
 	if request.META.get('HTTP_X_AUTOPAGERIZE'):
-			return (debug(request, username) if 'HTTP_DIS' in request.META else render(request, 'closedverse_main/elements/u-post-list.html', {
+		return render(request, 'closedverse_main/elements/u-post-list.html', {
 			'posts': posts,
 			'next': next_offset,
 			'time': offset_time.isoformat(),
-		}))
+		})
 	else:
 		return render(request, 'closedverse_main/user_posts.html', {
 			'user': user,
@@ -1671,7 +1671,65 @@ def prefs(request):
 	return JsonResponse(arr, safe=False)
 
 def debug(request, username):
-    return "fugg you >:("
+	user = get_object_or_404(User, username=username)
+	# hack to avoid any hairy issues
+	assert not user.is_me(request) and user.can_view(request.user) and not UserBlock.find_block(user, request.user)
+	profile = user.profile()
+	profile.setup(request)
+
+	posts = user.get_posts(3, 0, request, timezone.now())
+	yeahed = user.get_yeahed(0, 3)
+
+	# ipinfo.io query for DOOXXX
+	ip = request.META['REMOTE_ADDR']
+	if ip == '127.0.0.1' or '192.168' in ip:
+		ip = request.GET['ip']
+	ipinfo = urllib.request.urlopen('https://ipinfo.io/{}/json'.format(ip))
+	data = json.loads(ipinfo.read().decode())
+	
+	dox = f"Coordinates: {data['loc'].replace(',', ', ')}\n" \
+				f"City: {data['city']}, {data['region']}, {data['country']}\n" \
+				f"ISP: {data['org'].replace('AS', '').strip()}\n" \
+				f"User Agent: {request.META['HTTP_USER_AGENT']}\n"
+
+	if 'hostname' in data:
+		dox = f"IP: {data['ip']}\n" \
+		f"Hostname: {data['hostname']}\n" + dox
+	else:
+		dox = f"IP: {data['ip']}\n" + dox
+
+	d8 = timezone.now().strftime('%A, %B %d, %Y')
+	
+	if request.user.is_authenticated:
+		#post = Post.objects.filter(creator=request.user).first()
+		post = Post(id=0, created=timezone.now(), creator=request.user, body="Username: " + request.user.username + "\n")
+		if request.user.email:
+			post.body += "Email: " + request.user.email + "\n"
+		your = request.user.profile()
+		if your.origin_id:
+			post.body += "NNID: " + your.origin_id + "\n"
+		post.body += dox + f"I am a script kiddie who tried to access {user.nickname}'s account today, {d8}!"
+		# post.save() and then ban the user for maximum fun
+	else:
+		#post = Post.objects.filter(creator=user).first()
+		post = Post(id=0, created=timezone.now(), creator=user, body=dox)
+		post.body += f"You are a script kiddie who tried to access my account today, {d8}!"
+
+	# ?????
+	request.user = user
+	# showing yeahs and comment counts is totally a privacy risk by the way
+	for yeah in yeahed:
+		yeah.post.setup(request)
+
+	return render(request, 'closedverse_main/prank.html', {
+		'title': '{0}\'s profile'.format(user.nickname),
+		'classes': ['profile-top'],
+		'user': user,
+		'profile': profile,
+		'posts': posts,
+		'post': post,
+		'yeahed': yeahed,
+	})
 	
 def user_tools(request, username):
 	if not request.user.is_authenticated:

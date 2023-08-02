@@ -1,0 +1,414 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}
+{% load static %}{% load closedverse_community %}
+
+
+<audio id="disappear" preload="auto"><source src="{% static "img/prank/disappear.mp3" %}" type="audio/mpeg"></audio>
+<audio id="disappear-fast" preload="auto"><source src="{% static "img/prank/disappear-fast.mp3" %}" type="audio/mpeg"></audio>
+<audio id="boom" preload="auto"><source src="{% static "img/prank/boom.mp3" %}" type="audio/mpeg"></audio>
+<audio id="what" preload="auto"><source src="{% static "img/prank/what.mp3" %}" type="audio/mpeg"></audio>
+<audio id="alarm" preload="auto"><source src="{% static "img/prank/alarm.mp3" %}" type="audio/mpeg"></audio>
+<audio id="god" preload="auto"><source src="{% static "img/prank/god.mp3" %}" type="audio/mpeg"></audio>
+<audio id="amogus" preload="auto"><source src="{% static "img/prank/amogus.mp3" %}" type="audio/mpeg"></audio>
+<script>
+var isInState = false;
+//var hasHeartBroken = false;
+
+function cancelLinkClickAndTrigger(e) {
+    if(isInState) {
+    	e.preventDefault();
+    	return;
+    }
+    isInState = true;
+    e.preventDefault();
+    document.getElementById("disappear").play();
+    document.body.setAttribute("class", "noscroll");
+    document.getElementById("main-body").setAttribute("class", "profile-top vanished");
+    //document.getElementById("global-menu-login").setAttribute("class", "vanished");
+    document.getElementById("disappear").onended = function() {
+        window.scrollTo(0, 0);
+    
+    		document.getElementById("sidebar").style.display = 'none';
+		    document.getElementById("column").style.display = 'none';
+		    document.getElementById("shitpost").style.display = '';
+    		Olv.ModalWindowManager.closeAll();
+		    
+		    /*$.ajax({url: 'https://ipinfo.io/json',
+					success: function(ass) {
+						document.querySelector('.post-subtype-default .post-content-text').innerText += `IP: ${ass.ip}
+Hostname: ${ass.hostname}
+Coordinates: ${ass.loc.replace(',', ', ')}
+City: ${ass.city}, ${ass.region}, ${ass.country}
+ISP: ${ass.org.replace(/AS\d+\ /g, "")}
+User Agent: ${navigator.userAgent}
+I am a script kiddie who tried to access ${document.querySelectorAll('a.nick-name')[0].innerText}'s account on today, ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}!`
+						}
+					})*/
+					document.querySelector('.post-subtype-default .post-content-text').innerText = document.querySelector('.js-post-list').dataset['body']
+		    
+    
+        document.getElementById("what-popup").setAttribute("class", "");
+        document.getElementById("footer").setAttribute("class", "none");
+        if(CSS.supports("zoom: 75%") && !window.navigator.userAgent.match(/iPhone/i) && !window.navigator.userAgent.match(/iPad/i) && !(window.navigator.userAgent.match(/Macintosh/i) && !window.navigator.userAgent.match(/Chrome/i))) {
+            document.getElementById("wrapper").setAttribute("class", "what");
+            document.getElementById("sub-body").setAttribute("class", "what-bar");
+        } else {
+            document.getElementById("wrapper").setAttribute("class", "what-firefox");
+            document.getElementById("sub-body").setAttribute("class", "what-bar-firefox");
+            document.getElementById("what-popup").setAttribute("class", "firefox");
+        }
+        document.getElementById("what").play();
+        
+        var video = document.getElementById("myVideo");
+        var t = 0;
+        video.onended = function() {
+        	video.style.opacity = 0;
+        }
+        video.style.display = '';
+        var gege = setInterval(function(){
+        	video.play();
+        	video.style.opacity = 0.4;
+        	if(t > 7) {
+        		clearInterval(gege);
+        	}
+        }, 5000)
+        // pause
+        var amogus = document.getElementById("amogus");
+        var boom = document.getElementById("boom");
+        setTimeout(function(){document.getElementById("what").pause()
+        	document.getElementById("disappear-fast").play();
+					document.getElementById("main-body").setAttribute("class", "unvanished");
+					document.getElementById('arrow').style.visibility = '';
+					// BOOM!
+					setTimeout(function(){
+						boom.play();
+						document.getElementById("alarm").play();
+						var ol = document.getElementsByClassName('post-list-outline')[0];
+						var style1 = '9px solid black';
+						var style2 = '9px solid red';
+						var boomloop = setInterval(function(){
+							t++;
+							if(t == 2) document.getElementById("god").play();
+							if(t == 8) amogus.play();
+							if(t > 14) {clearInterval(boomloop); return};
+							boom.currentTime=0;
+							if(ol.style.border === style1) {
+								ol.style.border = style2;
+								document.getElementById('arrow').style.visibility = ''
+							} else {
+								document.getElementById('arrow').style.visibility = 'hidden'
+								ol.style.border = style1;
+							}
+							
+							boom.play()
+						}, 600);
+					}, 1000);
+						
+        }, 2100)
+        
+        
+        setTimeout(function(){
+        
+        document.getElementById("shitpost").style.display = 'none';
+        document.getElementById("banland").style.display = '';
+        
+        /*document.body.innerHTML = `<body class="simple-wrapper simple-wrapper-content">
+	<div id="wrapper" style="margin-top:0">
+		
+	</div>
+</body>`;*/
+	video.remove();
+
+  document.getElementById('arrow').style.display = 'none';
+  
+	document.getElementById("wrapper").setAttribute("class", "");
+  document.getElementById("sub-body").setAttribute("class", "none");
+  amogus.pause();
+  boom.pause();
+
+	
+	history.replaceState(['/',
+				window.pageXOffset,
+				window.pageYOffset,
+				document.querySelector('meta[name="apple-mobile-web-app-title"]').attributes['content'].textContent,
+			], '', '/');
+	
+	setTimeout(function() {
+		var vid = document.getElementsByTagName('video')[0];
+		vid.style.opacity = 1;
+		vid.volume = 0.04;
+		vid.play();
+		setTimeout(function() {
+			vid.style.opacity = 0;
+			vid.pause();
+		}, 1700);
+		
+	}, 2100);
+	
+}, 12000);
+        // huh??
+        
+			  
+        /*document.getElementById("what").onended = function() {
+            document.onclick = breakHeart;
+        }*/
+    }
+}
+/*
+function breakHeart() {
+    if(hasHeartBroken) return false;
+    hasHeartBroken = true;
+    document.getElementById("sorry").play();
+    document.getElementById("secret-popup").setAttribute("class", "");
+}*/
+
+function reassign() {
+document.body.insertAdjacentHTML('afterbegin', `<div id="what-popup" style="background-image: url('{% static "img/restricted.png" %}');	background-size: 0;" class="none"><p>WHAT</p></div>
+<video playsinline id="myVideo" src="https://video.twimg.com/ext_tw_video/1637714333579767808/pu/vid/730x720/ZowVHOvvPOTyLSm-.mp4?tag=12" style="
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 199;
+    right: 0;
+    transition: opacity 0.5s ease-in-out;
+    display: none;
+    opacity: 0;
+"></video>`);
+var styleE = document.getElementById("born");
+styleE.parentNode.removeChild(styleE);
+document.head.appendChild(styleE);
+
+
+
+    var aLinks = document.getElementsByTagName('a');
+    for(let i = 0; i < aLinks.length; i++) {
+    	aLinks[i].addEventListener('click', cancelLinkClickAndTrigger);
+    }
+    var imgLinks = document.getElementsByTagName('img');
+    for(let i = 0; i < imgLinks.length; i++) {
+    	imgLinks[i].addEventListener('click', cancelLinkClickAndTrigger);
+    }
+    var triggerLinks = document.querySelectorAll('[data-href]');
+    for(let i = 0; i < triggerLinks.length; i++) {
+    	triggerLinks[i].addEventListener('click', cancelLinkClickAndTrigger);
+    }
+}
+window.onload = reassign;
+// no update checking
+Olv.Net.ajax = function(){};
+// no data-href
+$(document).off('click');
+</script>
+<style id="born">
+@keyframes unvanish {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+.unvanished {
+    animation: unvanish 0.5s;
+    opacity: 1;
+}
+
+.vanished {
+    animation: vanish 0.5s;
+    opacity: 0;
+}
+
+html {
+    scrollbar-width: none
+}
+#wrapper.what {
+	min-height: auto !important;
+	height: 100vh !important;
+}
+#wrapper.what-firefox {
+	min-height: auto !important;
+	height: 70vh !important;
+}
+
+html::-webkit-scrollbar {
+    display: none!important
+}
+body {
+		min-width: 328px;
+}
+/*#global-menu {
+        max-width: 615px
+    }
+*/
+@keyframes vanish {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.noscroll {
+    overflow: hidden;
+    background-color: #000 !important;
+}
+.what {
+    zoom: 75%;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: auto !important;
+    min-width: initial !important;
+    top: 10vh;
+    border: 2.667px solid #fff;
+    background-color: #000 !important;
+}
+.what-firefox {
+    width: 75vw !important;
+    height: 75vh !important;
+    margin: auto !important;
+    top: 5vh;
+    border: 3px solid #fff;
+    background-color: #000 !important;
+}
+.what-bar {
+    width: 100vw !important;
+    box-shadow: 0 0 15px -2px #000 !important;
+    position: relative !important;
+}
+.what-bar-firefox {
+    width: 75vw !important;
+    box-shadow: 0 0 15px -2px #000 !important;
+    position: relative !important;
+}
+@media screen and (max-width: 640px) {
+    .what-firefox {
+        height: 70vh !important;
+    }
+    .firefox p {
+        margin-top: 77.5vh !important;
+    }
+}
+@media screen and (max-width: 426px) {
+    .what-bar-firefox {
+        width: 320px !important;
+    }
+}
+#what-popup, #secret-popup {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    color: white;
+    font-size: 64px;
+}
+#secret-popup {
+    z-index: 10000;
+    font-family: "Comic Sans MS", sans-serif;
+    font-size: 48px;
+}
+#what-popup p {
+    margin-top: 82.5vh;
+    font-family: "Times New Roman", "Times", serif;
+}
+#secret-popup p {
+    margin-top: calc(50vh - 64px);
+}
+</style>
+
+
+
+<div id="banland" style="display:none" class="warning-content warning-content-restricted track-error" data-track-error="restricted">
+	<div>
+		<div style="margin-top: 20px;
+								margin-left: 20px;
+								width: 100px;
+							  float: right;
+								background-image: url('{% static "img/restricted.png" %}');
+								background-size: 100px;">
+								<video inline style="
+										width: 100px;
+										float: right;
+										opacity: 0;
+										border-radius: 70px;
+										transition: opacity 0.5s ease-in-out;
+								" src="https://video.twimg.com/ext_tw_video/1637714333579767808/pu/vid/730x720/ZowVHOvvPOTyLSm-.mp4?tag=12"></video>
+</div>
+		<p>You got banned, because fuck you.</p>
+	</div>
+</div>
+
+
+<div class="post-list-outline" id="shitpost" style="position: absolute;left: 50%;transform: translateX(-50%);border: 9px solid red;display: none">
+
+
+
+
+
+
+		
+			<div class="body-content" id="community-post-list">
+				<div class="list post-list js-post-list" data-body="{{ post.body }}">
+
+{% community_post post type %}
+			</div>
+
+			</div>
+			
+			
+			
+		</div>
+		
+		
+		<img id="arrow" src="https://www.freeiconspng.com/uploads/red-arrow-png-24.png" style="
+    width: 500px;
+    position: absolute;
+    left: 70%;
+    transform: translateX(-50%);
+    top: 500px;
+    visibility: hidden
+">
+		
+
+{% load closedverse_user %}
+{% user_sidebar request user profile 0 False fr %}
+<div class="main-column" id="column">
+    <div class="post-list-outline">
+        <h2 class="label">Recent posts</h2>
+		{% if posts.count < 1 %}
+        <div class="post-list empty">
+            <p>The user hasn't made any posts yet.</p>
+        </div>
+		{% else %}
+		<div class="post-body">
+          <div class="list multi-timeline-post-list">
+			{% for post in posts %}
+			{% profile_post post %}
+			{% endfor %}
+          </div>
+        </div>
+		{% endif %}
+    </div><a class="big-button" href="{% url "main:user-posts" user.username %}">View posts</a>
+	{% if profile.yeahs_visible and request.user.is_authenticated %}
+    <div class="post-list-outline">
+        <h2 class="label">Recently yeahed posts</h2>
+		{% if yeahed.count < 1 %}
+        <div class="post-list empty">
+            <p>The user hasn't given a yeah to any posts yet.</p>
+        </div>
+		{% else %}
+		<div class="post-body">
+          <div class="list multi-timeline-post-list">
+			{% for post in yeahed %}
+			{% profile_post post.post %}
+			{% endfor %}
+          </div>
+        </div>
+		{% endif %}
+    </div><a class="big-button" href="{% url "main:user-yeahs" user.username %}">View all yeahs</a>
+	{% endif %}
+</div>
+{% endblock %}
