@@ -241,15 +241,28 @@ def getipintel(addr):
 	else:
 		return 0
 """
+
+# not ideal, switch this to use a real cache when caching for everything else is implemented (never?)
+iphub_cache = dict()
+
 # Now using iphub
-def iphub(addr):
+def iphub(addr, want_asn=False):
 	# hack to exclude my private network at the time (security flaw?)
 	if settings.IPHUB_KEY and not '192.168' in addr:
-		req = urllib.request.Request('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.IPHUB_KEY})
-		response = urllib.request.urlopen(req)
-		data = response.read().decode()
-		get_r = json.loads(data)
+		if addr in iphub_cache:
+			get_r = iphub_cache[addr]
+			#print('getting ip ' + addr + ' from cache 😌')
+		else:
+			#print('GETTING IP ' + addr + ' FROM IPHUB😤😤😤😤😤😤')
+			req = urllib.request.Request('http://v2.api.iphub.info/ip/' + addr, headers={'X-Key': settings.IPHUB_KEY})
+			response = urllib.request.urlopen(req)
+			data = response.read().decode()
+			get_r = json.loads(data)
+			iphub_cache[addr] = get_r
+		if want_asn:
+			return get_r.get('asn', '0')
 		if get_r.get('block', 0) == 1:
 			return True
-		else:
-			return False
+		# should just return falsey when returning nothing anyway?
+		#else:
+		#	return False

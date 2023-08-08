@@ -160,7 +160,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# replace with your own timezone
+TIME_ZONE = 'America/New_York'
 
 # Disable internationalization because Closedverse doesn't use it
 USE_I18N = False
@@ -310,5 +311,3 @@ XFF_STRICT = True
 XFF_NO_SPOOFING = True
 XFF_ALWAYS_PROXY = True
 XFF_HEADER_REQUIRED = True
-
-TIME_ZONE = 'EST'

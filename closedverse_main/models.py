@@ -31,6 +31,8 @@ emote_table_temp = {
 	':pensive:': '😔',
 	':joy:': '😂',
 	':scream:': '😱',
+	':slight_smile:': '🙂',
+	':slight_frown:': '🙁',
 }
 #post.body = post.body.replace(":trol:", '*^#') # will be replaced by javascript
 # remove and kill this

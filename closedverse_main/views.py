@@ -1356,7 +1356,7 @@ def user_follow(request, username):
 	if user.follow(request.user):
 		# Give the notification!
 		Notification.give_notification(request.user, 4, user)
-	followct = request.user.num_following()
+	followct = user.num_followers()
 	return JsonResponse({'following_count': followct})
 @require_http_methods(['POST'])
 @login_required
@@ -1377,7 +1377,7 @@ def user_unfollow(request, username):
 					return json_response("i'm crying")
 		"""
 	user.unfollow(request.user)
-	followct = request.user.num_following()
+	followct = user.num_followers()
 	return JsonResponse({'following_count': followct})
 @require_http_methods(['POST'])
 @login_required
