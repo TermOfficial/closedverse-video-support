@@ -27,8 +27,9 @@
 	<link id="darkness" {% if request.session.lights %}disabled {% endif %}rel="stylesheet" type="text/css" href="{% static "blueness.css" %}">
 	<script src="{% static "jslibs.js" %}"></script>
     <script src="{% static "closedverse.js" %}"></script>
-		{% if request.user.ColorTheme %}<script>
-  var mainColor = "{{ request.user.ColorTheme }}";
+    {% color_theme request as theme %}
+		{% if theme %}<script>
+  var mainColor = "{{ theme }}";
   var darkColor;
   var slightlyDarkColor;
   var darkerColor;
@@ -81,11 +82,12 @@
   }
 
   function toDefault() {
-    document.documentElement.style.setProperty("--theme", "initial");
+    document.documentElement.style.setProperty("--theme", "");
     document.documentElement.style.setProperty("--theme-dark", "initial");
     document.documentElement.style.setProperty("--theme-slightly-dark", "initial");
     document.documentElement.style.setProperty("--theme-darker", "initial");
     document.documentElement.style.setProperty("--theme-light", "initial");
+    document.documentElement.style.setProperty("--background", "");
   }
 
   changeThemeColor();
@@ -105,6 +107,7 @@
         <menu id="global-menu">
           <li id="global-menu-logo"><h1><a href="/"><img src="{% static "img/menu-logo.png" %}" alt="{{ brand_name }}"></a></h1></li>
 		  {% if request.user.unique_id %}
+		  {% invite_only request as inv %}
           <li id="global-menu-list">
             <ul>
               <li id="global-menu-mymenu"><a href="{% url "main:user-view" request.user.username %}"><span class="icon-container {% user_class request.user %}"><img src="{% avatar request.user %}" alt="User Page"></span><span>User Page</span></a></li>
@@ -116,11 +119,12 @@
                 <menu id="global-my-menu" class="invisible none">
                   <li><a href="{% url "main:profile-settings" %}" class="symbol my-menu-profile-setting"><span>Profile settings</span></a></li>
                   <li><a href="#" class="symbol my-menu-account-setting"><span>Account preferences</span></a></li>
+                  {% if inv %}<li><a href="{% url "main:invites" %}" class="symbol my-menu-guide"><span>Invites</span></a></li>{% endif %}
                   <li><a href="{% url "main:special-community-tag" "announcements" %}" class="symbol my-menu-openman"><span>{{ brand_name }} Announcements</span></a></li>
                   <li><a href="{% url "main:special-community-tag" "changelog" %}" class="symbol my-menu-openman"><span>{{ brand_name }} Changelog</span></a></li>
                   <li><a href="{% url "main:help-faq" %}" class="symbol my-menu-guide"><span>Frequently Asked Questions (FAQ)</span></a></li>
 				  <li><a href="{% url "main:help-rules" %}" class="symbol my-menu-guide"><span>{{ brand_name }} Rules</span></a></li>
-                  <li><a href="#" class="symbol my-menu-white-power"><span>Feedback/bug report</span></a></li>
+				    <li><a href="#" class="symbol my-menu-white-power"><span>Feedback/bug report</span></a></li>
                   <li><a href="{% url "main:server-stat" %}" class="symbol my-menu-openman"><span>Server Statistics</span></a></li>
 				  <li>
                     <form action="{% url "main:logout" %}" method="post" id="my-menu-logout" class="symbol">
@@ -143,9 +147,9 @@
       </div>
 	  <div id="container">
 	  {% endif %}
-      <div id="main-body" 
+      <div id="main-body"
     class="{% if classes %}{{ classes|join:" " }} {% endif %}{% if not request.user.is_authenticated %}
-	guest{% endif %}" 
+	guest{% endif %}"
 	csrf-token="{{ csrf_token }}">
 	  {% block main-body %}
 	  {% endblock %}

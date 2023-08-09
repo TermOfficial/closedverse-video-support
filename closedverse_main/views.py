@@ -9,6 +9,7 @@ from django.views.decorators.http import require_http_methods
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Count, Exists, OuterRef
+from django.db.models.functions import Now
 from .models import *
 from .util import *
 from closedverse import settings
@@ -20,7 +21,7 @@ from json import dumps, loads
 import sys, traceback
 import base64
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 import django.utils.dateformat
 from binascii import hexlify
@@ -30,6 +31,9 @@ from os import urandom
 
 # client-side mii fetch GET endpoint (like pf2m.com/hash if it supported cors)
 mii_endpoint = 'https://nnidlt.murilo.eu.org/api.php?output=hash_only&env=production&user_id='
+#mii_endpoint = '/origin?a='
+if hasattr(settings, 'mii_endpoint'):
+	mii_endpoint = settings.mii_endpoint
 
 def json_response(msg='', code=0, httperr=400):
 	thing = {
@@ -49,7 +53,7 @@ def json_response(msg='', code=0, httperr=400):
 
 def community_list(request):
 	"""Lists communities / main page."""
-	popularity = Community.popularity
+	#popularity = Community.popularity
 	obj = Community.objects
 	if request.user.is_authenticated:
 		classes = ['guest-top']
@@ -63,32 +67,26 @@ def community_list(request):
 		ad = Ads.get_one()
 	else:
 		ad = "no ads"
-		
-	availablemotds = Motd.motds_available()
-	if(availablemotds):
-		mesoftheday = Motd.get_one()
+	
+	WelcomeMSG = welcomemsg.objects.filter(show=True).order_by('-order', '-id')
+	# announcements within the past week-ish
+	announcements = Post.objects.filter(community__tags='announcements', created__gte=Now()-timedelta(days=5)).order_by('-created')[:6]
+	if request.user.is_authenticated:
+		my_communities = obj.filter(creator=request.user).order_by('-created')[0:12]
 	else:
-		mesoftheday = "no MOTDs"
-		
-	availablemes = welcomemsg.welcomemsg_available()
-	if(availablemes):
-		welmes = welcomemsg.get_one()
-	else:
-		welmes = "no MOTDs"
-		
+		my_communities = None
 	return render(request, 'closedverse_main/community_list.html', {
 		'title': 'Communities',
 		'ad': ad,
-		'mesoftheday': mesoftheday,
-		'welmes': welmes,
+		'announcements': announcements,
+		'WelcomeMSG': WelcomeMSG,
 		'availableads': availableads,
-		'availablemotds': availablemotds,
-		'availablemes': availablemes,
 		'classes': classes,
-		'general': obj.filter(type=0).order_by('-created')[0:8],
-		'game': obj.filter(type=1).order_by('-created')[0:8],
-		'special': obj.filter(type=2).order_by('-created')[0:8],
-		'user_communities': obj.filter(type=3).order_by('-created')[0:8],
+		'general': obj.filter(type=0).order_by('-created')[0:12],
+		'game': obj.filter(type=1).order_by('-created')[0:12],
+		'special': obj.filter(type=2).order_by('-created')[0:12],
+		'user_communities': sorted(obj.filter(type=3), key=lambda x: x.popularity(), reverse=True)[0:12],
+		'my_communities': my_communities,
 		'feature': obj.filter(is_feature=True).order_by('-created'),
 		'favorites': favorites,
 		'settings': settings,
@@ -214,7 +212,7 @@ def login_page(request):
 			# Todo: I might want to do some things relating to making models take care of object stuff like this instead of the view, it's totally messed up now.
 			successful = False if user[1] is False or not user[0].is_active() else True
 			LoginAttempt.objects.create(user=user[0], success=successful, user_agent=request.META.get('HTTP_USER_AGENT'), addr=request.META.get('REMOTE_ADDR'))
-			if user[1] is False:
+			if user[1] == False:
 				return HttpResponse("Invalid password.", status=401)
 			#is or ==?			
 			elif user[1] == 2:
@@ -247,6 +245,7 @@ def signup_page(request):
 			'title': 'Log in',
 			#'classes': ['no-login-btn']
 		})
+
 	if request.user.is_authenticated:
 		return redirect('/')
 	if request.method == 'POST':
@@ -255,6 +254,23 @@ def signup_page(request):
 				return HttpResponse("The reCAPTCHA validation has failed.", status=402)
 		if not (request.POST.get('username') and request.POST.get('password') and request.POST.get('password_again')):
 			return HttpResponseBadRequest("You didn't fill in all of the required fields.")
+
+		invited = False
+		invite = None
+		if settings.invite_only:
+			invite_code = request.POST.get('invite_code')
+			if not invite_code:
+				return HttpResponseBadRequest("An invite code is required to sign up.")
+			try:
+				invite = Invites.objects.get(code=invite_code)
+			except Invites.DoesNotExist:
+				return HttpResponseBadRequest("The provided invite code does not exist.")
+			if not invite.is_valid():
+				return HttpResponseBadRequest("The provided invite code has been used or is void. Please ask for another code.")
+				invited = True
+
+
+
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return HttpResponseBadRequest("Your username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
 		
@@ -344,6 +360,11 @@ def signup_page(request):
 			mii = None
 			gravatar = True
 		make = User.objects.closed_create_user(username=request.POST['username'], password=request.POST['password'], email=request.POST.get('email'), addr=request.META['REMOTE_ADDR'], user_agent=request.META['HTTP_USER_AGENT'], signup_addr=request.META['REMOTE_ADDR'], nick=nick, nn=mii, gravatar=gravatar)
+		if invited == True:
+			invite.used = True
+			invite.used_by = make
+			invite.save()
+
 		LoginAttempt.objects.create(user=make, success=True, user_agent=request.META.get('HTTP_USER_AGENT'), addr=request.META.get('REMOTE_ADDR'))
 		login(request, make)
 		request.session['passwd'] = make.password
@@ -354,11 +375,13 @@ def signup_page(request):
 		return render(request, 'closedverse_main/signup_page.html', {
 			'title': 'Sign up',
 			'recaptcha': settings.RECAPTCHA_PUBLIC_KEY,
+			'invite_only': settings.invite_only,
 			'age': settings.age_allowed,
 			'mii_domain': mii_domain,
 			'mii_endpoint': mii_endpoint,
 			#'classes': ['no-login-btn'],
 		})
+
 def forgot_passwd(request):
 	"""Password email page / post endpoint."""
 	if request.method == 'POST' and request.POST.get('email'):
@@ -943,6 +966,7 @@ def community_view(request, community):
 	"""View an individual community"""
 	communities = get_object_or_404(Community, id=community)
 	communities.setup(request)
+	can_edit = communities.can_edit_community(request)
 	if not communities.clickable():
 		return HttpResponseForbidden()
 	if not request.user.is_authenticated and communities.require_auth:
@@ -998,7 +1022,8 @@ def community_tools(request, community):
 	the_community = get_object_or_404(Community, id=community)
 	if not request.user.is_authenticated:
 		raise Http404()
-	if request.user != the_community.creator:
+	can_edit = the_community.can_edit_community(request)
+	if not can_edit:
 		raise Http404()
 	return render(request, 'closedverse_main/community_tools.html', {
 	'title': 'Community tools',
@@ -1013,12 +1038,15 @@ def community_tools_set(request, community):
 		#do the checks
 		if not request.user.is_authenticated:
 			return HttpResponseForbidden()
-		if request.user != the_community.creator:
+		can_edit = the_community.can_edit_community(request)
+		if not can_edit:
 			return HttpResponseForbidden()
 		if len(request.POST.get('community_name')) == 0 or len(request.POST.get('community_name')) >= 100:
-			return json_response('bad name')
+			return json_response('Your community name is either too short or too long.')
 		if len(request.POST.get('community_description')) >= 1024:
-			return json_response('bad description')
+			return json_response('Your community description is too long.')
+		if int(request.POST.get('community_platform')) > 8:
+			return json_response('Invalid Platform type.')
 		if the_community.is_rm:
 			return json_response('Community is removed')
 		if the_community.type == 4:
@@ -1093,16 +1121,16 @@ def community_create_action(request):
 		if user.c_tokens < 1:
 			return json_response("You don't have any tokens left")
 		if len(request.POST.get('community_name')) == 0 or len(request.POST.get('community_name')) >= 100:
-			return json_response('bad name')
+			return json_response('Your community name is either too short or too long.')
 		if len(request.POST.get('community_description')) >= 1024:
-			return json_response('bad description')
+			return json_response('Your community description is too long.')
+		if int(request.POST.get('community_platform')) > 8:
+			return json_response('Invalid Platform type.')
 		get = request.POST.get
 		user.c_tokens -= 1
 		user.save()
-		Community.objects.create(name=get('community_name'), description=get('community_description'), type=3, platform=get('community_platform'), creator=user)
-		return json_response('Your community has been created.')
-
-@require_http_methods(['POST'])
+		community = Community.objects.create(name=get('community_name'), description=get('community_description'), type=3, platform=get('community_platform'), creator=user)
+		return json_response('Community has been created, check the front page!', 'Done')
 @login_required
 def post_create(request, community):
 	if request.method == 'POST':
@@ -1134,7 +1162,8 @@ def post_create(request, community):
 			7: "Please don't spam.",
 			9: "You're very funny. Unfortunately your funniness blah blah blah fuck off.",
 			10: "No mr white, you can't make a post entirely consistant of spaces",
-			11: "The video you've uploaded is invalid." 
+			11: "The video you've uploaded is invalid.",
+			12: "Please don't post Zalgo text.",
 			}.get(new_post))
 		# Render correctly whether we're posting to Activity Feed
 		if community.is_activity():
@@ -1193,6 +1222,7 @@ def post_view(request, post):
 @require_http_methods(['POST'])
 @login_required
 def post_add_yeah(request, post):
+
 	the_post = get_object_or_404(Post, id=post)
 	if the_post.disable_yeah:
 		return json_response('You cannot yeah this post.')
@@ -1200,6 +1230,7 @@ def post_add_yeah(request, post):
 		# Give the notification!
 		Notification.give_notification(request.user, 0, the_post.creator, the_post)
 	return HttpResponse()
+	
 @require_http_methods(['POST'])
 @login_required
 def post_delete_yeah(request, post):
@@ -1263,6 +1294,7 @@ def post_comments(request, post):
 			2: "The image you've uploaded is invalid.",
 			3: "You're making comments too fast, wait a few seconds and try again.",
 			6: "Not allowed.",
+			12: "Please don't post Zalgo text.",
 			}.get(new_post))
 		# Give the notification!
 		if post.is_mine(request.user):
@@ -1379,6 +1411,7 @@ def user_unfollow(request, username):
 	user.unfollow(request.user)
 	followct = user.num_followers()
 	return JsonResponse({'following_count': followct})
+	
 @require_http_methods(['POST'])
 @login_required
 def user_friendrequest_create(request, username):
@@ -1739,16 +1772,14 @@ def user_tools(request, username):
 	user = get_object_or_404(User, username__iexact=username)
 	profile = user.profile()
 	# check if the requesting user is allowed to change someone
-	if request.user.has_authority(user):
-		return HttpResponseForbidden()
+	if user.has_authority(request.user):
+		raise Http404()
 	seen_by = MetaViews.objects.filter(target_user=user).distinct().order_by('-id')[:10]
 	has_seen = MetaViews.objects.filter(from_user=user).distinct().order_by('-id')[:10]
 	
-	'''
-		findattempt = LoginAttempt.objects.filter(user=user).order_by('-id')[:1]
-	for findattempt in findattempt:
-		accountmatch = LoginAttempt.objects.filter(addr__in=[findattempt.addr])
-	'''
+	accountmatch = User.objects.filter(
+	Q(addr=user.addr) | Q(addr=user.signup_addr)
+	).exclude(username=user.username)
 	
 	return render(request, 'closedverse_main/man/usertools.html', {
 	'title': 'Admin tools',
@@ -1756,6 +1787,7 @@ def user_tools(request, username):
 	'seen_by': seen_by,
 	'has_seen': has_seen,
 	'profile': profile,
+	'accountmatch': accountmatch,
 	'min_lvl_metadata_perms': settings.min_lvl_metadata_perms,
 	})
 	
@@ -1764,13 +1796,15 @@ def user_tools_meta(request, username):
 		raise Http404()
 	if not request.user.can_manage():
 		raise Http404()
-	if not request.user.level >= settings.min_lvl_metadata_perms or not request.user.is_staff:
-		return HttpResponseForbidden()
+	if request.user.level < settings.min_lvl_metadata_perms:
+		raise Http404()
 	user = get_object_or_404(User, username__iexact=username)
 	profile = user.profile()
+	if user.protect_data:
+		return json_response('This user\'s data has been locked.')
 	# check if the requesting user is allowed to view someone
-	if request.user.has_authority(user):
-		return HttpResponseForbidden()
+	if user.has_authority(request.user):
+		raise Http404()
 		
 	# get the last time the page was opened
 	last_opened = MetaViews.objects.filter(target_user=user, from_user=request.user).order_by('-created').first()
@@ -1813,14 +1847,16 @@ def user_tools_set(request, username):
 			raise Http404()
 		if not request.user.can_manage():
 			raise Http404()
-		if request.user.has_authority(user):
-			return HttpResponseForbidden()
-		if user.is_me(request):
-			return json_response('Using the admin panel, you are able to view your own account, but not edit it.')
+		if user.has_authority(request.user):
+			raise Http404()
+		#if user.is_me(request):
+		#	return json_response('Using the admin panel, you are able to view your own account, but not edit it.')
 		if request.POST.get('username') == "" or None:
 			return json_response('Username Invalid')
 		if not re.compile(r'^[A-Za-z0-9-._]{1,32}$').match(request.POST['username']) or not re.compile(r'[A-Za-z0-9]').match(request.POST['username']):
 			return json_response("The username either contains invalid characters or is too long (only letters + numbers, dashes, dots and underscores are allowed")
+		if User.objects.filter(username=request.POST['username']).exists() and not request.POST['username'] == user.username:
+			return json_response("Username is taken, please pick a new name.")
 		if request.POST.get('nickname') == "" or None:
 			return json_response('Nickname Invalid')
 		if request.POST.get('post_limit') == "" or None:
@@ -1838,6 +1874,7 @@ def user_tools_set(request, username):
 		user.warned = False if request.POST.get('warned') is None else True
 		profile.let_freedom = True if request.POST.get('let_freedom') is None else False
 		profile.cannot_edit = False if request.POST.get('cannot_edit') is None else True
+		user.can_invite = True if request.POST.get('can_invite') is None else False
 		
 		purge_posts = False if request.POST.get('purge_posts') is None else True
 		purge_comments = False if request.POST.get('purge_comments') is None else True
@@ -1861,15 +1898,46 @@ def user_tools_set(request, username):
 	else:
 		raise Http404()
 
-@require_http_methods(['POST'])
+def invites(request):
+	if not settings.invite_only:
+		raise Http404()
+	if not request.user.is_authenticated:
+		raise Http404()
+	invites_list = Invites.objects.filter(creator=request.user, used=False, void=False)
+	return render(request, 'closedverse_main/invites.html', {
+		'title': 'Invites',
+		'invites': invites_list,
+		'invite_only': settings.invite_only,
+	})
+	
+def create_invite(request):
+	if request.method == 'POST':
+		invite = Invites()
+		if not request.user.is_authenticated:
+			return json_response('You are not signed in.')
+		if not request.user.can_invite:
+			return json_response('You are not allowed to make new invites.')
+		if not settings.invite_only:
+			return json_response('The invite system is offline.')
+		existing_invites = Invites.objects.filter(creator=request.user, used=False, void=False).count()
+		if existing_invites >= 4:
+			return json_response('You already have ' + str(existing_invites) + ' active invites. You cannot create more.')
+		invite.creator = request.user
+		invite.code = str(uuid.uuid4())
+		invite.save()
+		return HttpResponse()
+	else:
+		raise Http404()
+
+#@require_http_methods(['POST'])
 # Disabling login requirement since it's in signup now. Regret?
 #@login_required
 def origin_id(request):
 	if not request.headers.get('x-requested-with') == 'XMLHttpRequest':
 		return HttpResponse("<a href='https://github.com/ariankordi/closedverse/blob/master/closedverse_main/util.py#L44-L86'>Please do not use this as an API!</a>")
-	if not request.POST.get('a'):
+	if not request.GET.get('a'):
 		return HttpResponseBadRequest()
-	mii = get_mii(request.POST['a'])
+	mii = get_mii(request.GET['a'])
 	if not mii:
 		return HttpResponseBadRequest("The NNID provided doesn't exist.")
 	return HttpResponse(mii[0])
@@ -1985,6 +2053,10 @@ def help_rules(request):
 	return render(request, 'closedverse_main/help/rules.html', {'title': 'Rules', 'age': settings.age_allowed})
 def help_faq(request):
 	return render(request, 'closedverse_main/help/faq.html', {'title': 'FAQ'})
+def help_legal(request):
+	if not settings.CLOSEDVERSE_PROD:
+		return HttpResponseForbidden()
+	return render(request, 'closedverse_main/help/legal.html', {'title': "Legal Information"})
 def help_contact(request):
 	return render(request, 'closedverse_main/help/contact.html', {'title': "Contact info"})
 def help_why(request):

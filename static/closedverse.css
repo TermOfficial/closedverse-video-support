@@ -4914,7 +4914,7 @@ div#activity-feed-tutorial.no-content p.tleft {
   font-weight: bold;
   color: #323232;
 }
-.news-list .nick-namea:hover {
+.news-list .nick-name a:hover {
   text-decoration: underline;
 }
 .news-list a.link {
@@ -8860,6 +8860,9 @@ font-size: 20px;
 .login-page .ll {
 margin-top: 20px;
 margin-bottom: 20px;
+}
+.login-page a:hover {
+  text-decoration: underline;
 }
 .login-page .g-recaptcha {
 margin: 10px auto 15px;

@@ -272,9 +272,18 @@ IMAGE_DELETE_SETTING = 2
 # allow sign ups.
 allow_signups = True
 
+# Whatever the reason may be, you have the option to make your clone invite only.
+invite_only = False
+
 # Minimum level required to view IP addresses and user agents. (default: 10)
 # Mods under this level will still be able to manage users, however will not be able to view any sensitive data.
-min_lvl_metadata_perms = 10
+min_lvl_metadata_perms = 100
+
+# if someone's level is equal or above this, they can edit most community on your clone.
+level_needed_to_man_communities = 5
+
+# if someone's level is equal or above this, they can edit any user with a lower level on your clone.
+level_needed_to_man_users = 5
 
 # file size limits in megabytes! only applies when using the community tools.
 max_icon_size = .5
@@ -311,3 +320,6 @@ XFF_STRICT = True
 XFF_NO_SPOOFING = True
 XFF_ALWAYS_PROXY = True
 XFF_HEADER_REQUIRED = True
+
+# uncomment this if you want miis to be retrieved on the server
+#mii_endpoint = '/origin?a='

@@ -89,7 +89,7 @@ class CommentAdmin(admin.ModelAdmin):
 
 class CommunityAdmin(admin.ModelAdmin):
 	raw_id_fields = ('creator', )
-	list_display = ('id', 'name', 'description', 'type', 'creator', 'is_rm', 'is_feature', 'require_auth')
+	list_display = ('id', 'name', 'description', 'type', 'creator', 'popularity', 'is_rm', 'is_feature', 'require_auth')
 	search_fields = ('id', 'unique_id', 'name', 'description', )
 	actions = [Hide_content, Show_content, Feature_community, Unfeature_community, force_login, unforce_login]
 	def get_queryset(self, request):
@@ -114,11 +114,9 @@ class AuditAdmin(admin.ModelAdmin):
 
 class AdsAdmin(admin.ModelAdmin):
 		raw_id_fileds = ('id', 'created', 'url', 'imageurl')
-
-class MOTDAdmin(admin.ModelAdmin):
-		raw_id_fileds = ('id', 'created', 'message', )
-		list_display = ('message', 'show', 'order', 'created', )
-		actions = [Hide_Memo, Show_Memo]
+		
+class InvitesAdmin(admin.ModelAdmin):
+		raw_id_fileds = ('id', 'created', 'creator')
 
 class WelcomemsgAdmin(admin.ModelAdmin):
 		raw_id_fileds = ('id', 'created', 'message', )
@@ -163,5 +161,4 @@ if settings.DEBUG:
 	admin.site.register(models.Poll)
 	admin.site.register(models.PollVote)
 admin.site.register(models.Ads, AdsAdmin)
-admin.site.register(models.Motd, MOTDAdmin)
 admin.site.register(models.welcomemsg, WelcomemsgAdmin)

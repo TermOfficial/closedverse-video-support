@@ -5,6 +5,7 @@ register = template.Library()
 def community_sidebar(community, request):
 	return {
 		'community': community,
+		'can_edit': community.can_edit_community(request),
 		'request': request,
 	}
 @register.inclusion_tag('closedverse_main/elements/community_post.html')
@@ -63,9 +64,10 @@ def file_button():
 		
 	}
 @register.inclusion_tag('closedverse_main/elements/community_page_elem.html')
-def community_page_element(communities, text='General Communities', feature=False):
+def community_page_element(communities, text='General Communities', feature=False, url_name=''):
 	return {
 		'communities': communities,
 		'title': text,
 		'feature': feature,
+		'url_name': url_name,
 	}

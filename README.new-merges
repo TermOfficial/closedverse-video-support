@@ -5,6 +5,11 @@ things NOT copied from cedar-django:
 * you can't yeah your own posts like cedar-django allowed
 * probably more
 
+not added since other new cedar-django changes:
+* gender_is field is not removed
+* "No features have been restricted, as this is just a warning." was not removed
+* discord videos were not added
+
 features rougly added:
 * improvements to bans: read-only "disabled" mode, warnings, indicating a user's ban status or warnings
 * "User Tools" lets you see or modify user data outside of the admin panel
@@ -17,6 +22,21 @@ features rougly added:
 * new admin actions and filters have been added to enhance the admin panel
 * my data page
 * probably far more
+
+features added as of august 2023:
+* invite system
+* popular user communities section
+* ability to edit any community as an admin
+* not allowing users to post zalgo text
+* protect_data attribute
+* other permissions related changes that have yet to be reviewed (does user tools access = /admin access?)
+* motds/welcome message system, coexisting with settings memo
+* don't let anyone set platform type to an invalid value
+* user tools shows alts
+* user tools checks if you are setting a user's username to one that already exists
+* "general" badge will now show on communities
+* change allowed_users field on communities to rank_needed_to_post, no longer a whitelist
+* did not add cedar-django's ban middleware handler
 
 
 migration process:

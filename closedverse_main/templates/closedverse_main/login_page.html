@@ -9,19 +9,18 @@
 			<h3 class="label"><label>User ID: <input type="text" class="auth-input" name="username" maxlength="32" placeholder="User ID"></label></h3>
 			<h3 class="label"><label>Password: <input type="password" class="auth-input" name="password" maxlength="32" placeholder="Password"></label></h3>
 			{% csrf_token %}
-			
+
 			<p class="red" style="margin-bottom:6px"></p>
-			
+
 			<button type="submit" class="button">Sign In</button>
-			
+
 			{% if allow_signups %}
 			<div class="ll">
-				<p>If you don't have an account, <a href="{% url "main:signup" %}">you can sign up here.</a></p>
-				<p>If you've forgotten your password or need to reset it, you can <a href="{% url "main:forgot-passwd" %}">do that here.</a></p>
-				<p>If you need help with logging in, check <a href="{% url "main:help-login" %}">this page</a> out.</p>
+				<p>If you don't have an account, <a href="{% url "main:signup" %}"><b>sign up</b> here.</a></p>
+				<p>If you forgot your password, <a href="{% url "main:forgot-passwd" %}"><b>reset</b> it here.</a></p>
+				<br><p>If you need help with logging in, see the <a href="{% url "main:help-login" %}"><b>login help</b></a> page.</p>
 			</div>
-			{% endif %}
-			{% if not allow_signups %}
+			{% else %}
 			<div class="ll">
 			    <p>Signing up is disabled for now, check back later.</p>
 			</div>

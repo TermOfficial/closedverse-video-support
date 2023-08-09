@@ -20,6 +20,7 @@ from django.urls import reverse
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 import re
+import unicodedata
 import random
 
 # ideally this would be done in js so you can preview them or even morer ideallyierier it would be both js and in the db (???????
@@ -45,7 +46,6 @@ def funny_stupid_azz_emote_table_replace(text):
 
 
 feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (69, 'easter egg'), )
-#feelings = ((0, 'normal'), (1, 'happy'), (2, 'wink'), (3, 'surprised'), (4, 'frustrated'), (5, 'confused'), (38, 'japan'), (39, 'lol i lied'), (69, 'adam is gay'), (70, 'I am a faggot!'), (71, 'Juice'), (72, "Commit Suicide"), (73, "Fresh!"))
 post_status = ((0, 'ok'), (1, 'delete by user'), (2, 'delete by authority'), (3, 'delete by mod'), (4, 'delete by admin'), (5, 'account pruge'))
 visibility = ((0, 'show'), (1, 'friends only'), (2, 'hide'), )
 
@@ -154,7 +154,7 @@ class ColorField(models.CharField):
 	def __init__(self, *args, **kwargs):
 		kwargs['max_length'] = 18
 		super(ColorField, self).__init__(*args, **kwargs)
-		
+
 #mii_domain = 'https://mii-secure.cdn.nintendo.net'
 # as of writing, mii-secure is unstable, nintendo please do not f*ck me for this
 mii_domain = 'https://s3.us-east-1.amazonaws.com/mii-images.account.nintendo.net/'
@@ -181,6 +181,7 @@ class User(models.Model):
 	user_agent = models.TextField(null=True, blank=True)
 	# C Tokens are things that let you make communities and shit.
 	c_tokens = models.IntegerField(default=1)
+	protect_data = models.BooleanField(default=False)
 	
 	# Things that don't have to do with auth lol
 	hide_online = models.BooleanField(default=False)
@@ -189,6 +190,7 @@ class User(models.Model):
 	staff = models.BooleanField(default=False)
 	#active = models.SmallIntegerField(default=1, choices=((0, 'Disabled'), (1, 'Good'), (2, 'Redirect')))
 	active = models.BooleanField(default=True)
+	can_invite = models.BooleanField(default=True)
 	warned = models.BooleanField(default=False)
 	warned_reason = models.CharField(blank=True, null=True, max_length=600)
 	bg_url = models.CharField(max_length=300, null=True, blank=True)
@@ -206,19 +208,6 @@ class User(models.Model):
 	
 	def __str__(self):
 		return self.username
-	def ColorTheme(self):
-		# if the user set a theme, display that.
-		if self.theme:
-			the_theme = self.theme
-			the_theme = the_theme.strip("#")
-		# if there's no theme set by the user, use the site's picked theme.
-		elif settings.site_wide_theme_hex:
-			the_theme = settings.site_wide_theme_hex
-			the_theme = the_theme.strip("#")
-		# If there's no theme set in settings.py, return None.
-		else:
-			the_theme = None
-		return the_theme
 	def get_full_name(self):
 		return self.username
 	def get_short_name(self):
@@ -344,7 +333,7 @@ class User(models.Model):
 			10: "Staff",
 			11: "GAY DOGWATER ETC",
 			12: "THE STUPIDEST ROLE IN THE WORLD",
-			13: "A	D	R	I	A	N",
+			13: "A   D   R   I   A   N",
 			14: "Contest Winner",
 			15: "Game Contest Winner",
 			16: "Cedar Inc.",
@@ -359,7 +348,7 @@ class User(models.Model):
 		else:
 			return False
 	def has_freedom(self):
-		return self.profile('let_freedom')	
+		return self.profile('let_freedom')
 	# This is the coolest one
 	def online_status(self, force=False):
 	# Okay so this returns True if the user's online, 2 if they're AFK, False if they're offline and None if they hide it
@@ -431,7 +420,7 @@ class User(models.Model):
 			return False
 		return self.follow_target.filter(source=source, target=self).delete()
 	def can_block(self, source):
-		if self.can_manage() or self.level > 0:
+		if self.can_manage() or self.level > source.level:
 			return False
 		#if source.profile('moyenne'):
 		#	return False
@@ -501,15 +490,18 @@ class User(models.Model):
 			
 	# Admin can-manage
 	def can_manage(self):
-		if (self.level >= 2) or self.is_staff():
-			return True	
-		return False
-	# Does user have authority over self?
+		if self.level >= settings.level_needed_to_man_users or self.staff:
+			can_manage = True 
+		else:
+			can_manage = False
+		return can_manage
+	# Does self have authority over user?
 	def has_authority(self, user):
-		if self.is_staff():
-			return False
-		if (self.level < user.level):
-			return True	
+		if user.is_authenticated:
+			if self.staff and not user.staff:
+				return True
+			if self.level >= user.level:
+				return True 
 		return False
 	def friend_state(self, other):
 		# Todo: return -1 for cannot, 0 for nothing, 1 for my friend pending, 2 for their friend pending, 3 for friends
@@ -669,6 +661,26 @@ class User(models.Model):
 		except:
 			return False
 		return user
+		
+# An invite system, for closed off communities or for whatever reason.
+class Invites(models.Model):
+	id = models.AutoField(primary_key=True)
+	created = models.DateTimeField(auto_now_add=True)
+	creator = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE, related_name='invite_creator')
+	code = models.CharField(max_length=36, default=uuid.uuid4)
+	used = models.BooleanField(default=False)
+	void = models.BooleanField(default=False)
+	used_by = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE, related_name='invited_user')
+	
+	def is_valid(self):
+		if self.used or self.void:
+			return False
+		if not self.creator.can_invite:
+			return False
+		return True
+		
+	def __str__(self):
+		return "invite by " + str(self.creator)
 
 class Community(models.Model):
 	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -687,13 +699,17 @@ class Community(models.Model):
 	is_rm = models.BooleanField(default=False)
 	is_feature = models.BooleanField(default=False)
 	require_auth = models.BooleanField(default=False)
-	allowed_users = models.TextField(null=True, blank=True)
+	rank_needed_to_post = models.IntegerField(default=0)
 	creator = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
 
 	objects = PostManager()
 	real = models.Manager()
 	def popularity(self):
-		popularity = Post.objects.filter(community=self).count()
+		if self.creator:
+			# don't count posts from the community owner.
+			popularity = Post.objects.filter(community=self).exclude(creator=self.creator).count()
+		else:
+			popularity = Post.objects.filter(community=self).count()
 		return popularity
 	def __str__(self):
 		return self.name
@@ -762,14 +778,29 @@ class Community(models.Model):
 				post.recent_comment = post.recent_comment()
 		return posts
 	def post_perm(self, request):
-		if self.allowed_users:
-			allows = self.allowed_users.split(',')
-			if not request.user.is_authenticated or str(request.user.id) not in allows:
-				return False
+		if request.user.level >= self.rank_needed_to_post:
+			return True
+		elif request.user.staff == True:
+			return True
+		# If the community is made by you, you should be able to post in there regardless.
+		elif request.user == self.creator:
 			return True
 		else:
+			return False
+	def can_edit_community(self, request):
+		# yanderedev moment
+		if not request.user.is_authenticated:
+			return False
+		# If the user is a mod but can't post in one community, the user should not edit it either.
+		if not request.user.level >= self.rank_needed_to_post and not request.user.staff == True:
+			return False
+			
+		if request.user == self.creator:
 			return True
-	
+		elif request.user.level >= settings.level_needed_to_man_communities or request.user.staff == True:
+			return True
+		else:
+			return False
 	def has_favorite(self, request):
 		if request.user.communityfavorite_set.filter(community=self).exists():
 			return True
@@ -811,6 +842,9 @@ class Community(models.Model):
 		drawing = None
 		video = None
 		body = request.POST.get('body')
+		for c in body:
+			if unicodedata.combining(c):
+				return 12
 		if request.FILES.get('screen'):
 			upload = util.image_upload(request.FILES['screen'], True)
 			if upload == 1:
@@ -930,8 +964,8 @@ class Post(models.Model):
 		return True
 	def can_rm(self, request):
 		if self.creator.has_authority(request.user):
-			return True
-		return False
+			return False
+		return True
 	def give_yeah(self, request):
 		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
 			return False
@@ -994,6 +1028,9 @@ class Post(models.Model):
 			return 3
 		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
 			return 6
+		for c in request.POST['body']:
+			if unicodedata.combining(c):
+				return 12
 		if not request.user.is_active():
 			return 6
 		if len(request.POST['body']) > 2200 or (len(request.POST['body']) < 1 and not request.POST.get('_post_type') == 'painting'):
@@ -1143,10 +1180,9 @@ class Comment(models.Model):
 			return False
 		return True
 	def can_rm(self, request):
-		if self.creator.has_authority(request.user):
+		# if the creator of the post does not have authority, you can remove it.
+		if not self.creator.has_authority(request.user):
 			return True
-		#if self.original_post.is_mine(request.user):
-		#	return True
 		return False
 	def give_yeah(self, request):
 		if not request.user.has_freedom() and Yeah.objects.filter(by=request.user, created__gt=timezone.now() - timedelta(seconds=5)).exists():
@@ -1302,8 +1338,8 @@ class Profile(models.Model):
 	def can_friend(self, user=None):
 		if self.let_friendrequest == 2:
 			return False
-		if UserBlock.find_block(self.user, user):
-			return False
+		#if user.is_authenticated and UserBlock.find_block(self.user, user):
+		#	return False
 		elif self.let_friendrequest == 1:
 			if not user.is_following(self.user):
 				return False
@@ -1693,18 +1729,6 @@ class PollVote(models.Model):
 	#def choice_votes(self):
 	#	return PollVote.objects.filter(poll=self.poll, choice=self.choice).count()
 
-class RedFlag(models.Model):
-	id = models.AutoField(primary_key=True)
-	created = models.DateTimeField(auto_now_add=True)
-	post = models.ForeignKey(Post, blank=True, null=True, on_delete=models.CASCADE)
-	comment = models.ForeignKey(Comment, blank=True, null=True, on_delete=models.CASCADE)
-	user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)
-	type = models.SmallIntegerField(choices=((0, 'Post'), (1, 'Comment'), (2, 'User'), ))
-	reason = models.SmallIntegerField(choices=((0, "Actual harassment"), (1, "Spam"), (2, "I don't like this"), (3, "Personal info"), (4, "Obscene use of swearing"), (5, "NSFW where not allowed"), (6, "Overly advertising/spam"), (7, "Please delete this")))
-	reasoning = models.TextField(default='', null=True, blank=True)
-	
-	def __str__(self):
-		return "Report on a " + self.get_type_display() + " for " + self.get_reason_display() + ": " + str(self.reasoning)
 
 # Login attempts: for incorrect passwords
 class LoginAttempt(models.Model):
@@ -1716,7 +1740,7 @@ class LoginAttempt(models.Model):
 	user_agent = models.TextField(null=True, blank=True)
 	
 	def __str__(self):
-		return 'A login attempt to ' + str(self.user) + ' from ' + self.addr + ', ' + str(self.success)
+		return 'A login attempt to ' + str(self.user) + ' from ' + str(self.addr) + ', ' + str(self.success)
 		
 class MetaViews(models.Model):
 	id = models.AutoField(primary_key=True)
@@ -1809,30 +1833,11 @@ class Ads(models.Model):
 			adsavailable = False
 		return adsavailable
 
+	class Meta:
+		verbose_name_plural = "ads"
+
 	def __str__(self):
 		return "Ad with id " + str(self.id) + ", created at " + str(self.created) + ", with url " + str(self.url) + ", and imageurl " + str(self.imageurl)
-
-class Motd(models.Model):
-	id = models.AutoField(primary_key=True)
-	order = models.IntegerField(max_length=3, default=1)
-	show = models.BooleanField(default=True)
-	created = models.DateTimeField(auto_now_add=True)
-	Title = models.CharField(max_length=256, blank=True, default='Title')
-	message = models.TextField(null=False, blank=False)
-	hide_date = models.BooleanField(default=False)
-	image = models.ImageField(upload_to='MOTD/%y/%m/%d/', max_length=255, null=True, blank=True)
-
-	def get_one():
-		mesoftheday = Motd.objects.order_by('order', '-id').filter(show=True)
-		return mesoftheday
-
-	def motds_available():
-		global motdsavailable
-		if(Motd.objects.filter(show=True).exists()):
-			motdsavailable = True
-		else:
-			motdsavailable = False
-		return motdsavailable
 
 class welcomemsg(models.Model):
 	id = models.AutoField(primary_key=True)
@@ -1854,6 +1859,9 @@ class welcomemsg(models.Model):
 		else:
 			welcomeisavailable = False
 		return welcomeisavailable
+
+	class Meta:
+		verbose_name_plural = "welcome messages"
 		
 # thing will log changes to your bio or nickname
 class ProfileHistory(models.Model):
@@ -1867,6 +1875,9 @@ class ProfileHistory(models.Model):
 	
 	def __str__(self):
 		return str(self.user) + ' changed profile details'
+
+	class Meta:
+		verbose_name_plural = "profile histories"
 	
 # blah blah blah
 # this method will be executed when...

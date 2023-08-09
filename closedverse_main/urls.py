@@ -75,13 +75,13 @@ urlpatterns = [
 	# Post-meta: polls
 	url(r'poll/(?P<poll>'+ uuidr +'+)/vote$', views.poll_vote, name='poll-vote'),
 	url(r'poll/(?P<poll>'+ uuidr +'+)/unvote$', views.poll_unvote, name='poll-unvote'),
-	
+
 	# Notifications
 	url(r'alive$', views.check_notifications, name='check-notifications'),
 	url(r'notifications/?$', views.notifications, name='notifications'),
 	url(r'notifications/friend_requests/?$', views.friend_requests, name='friend-requests'),
 	url(r'notifications/(?P<notification>'+ uuidr +'+)\.rm$', views.notification_delete, name='notification-delete'),
-	
+
 	# User meta + messages
 	url(r'activity/?$', views.activity_feed, name='activity'),
 	url(r'users.search$', views.user_search, name='user-search'),
@@ -91,18 +91,21 @@ urlpatterns = [
 	url(r'messages/(?P<message>'+ uuidr +'+)/rm$', views.message_rm, name='message-delete'),
 	url(r'messages/'+ username +'$', views.messages_view, name='messages-view'),
 	url(r'messages/'+ username +'/read$', views.messages_read, name='messages-read'),
-	
+
 	# Help/configuration
 	url(r'lights$', views.set_lighting, name='set-lighting'),
 	#url(r'togglesignups$', views.set_signups, name='set-signups'),
 	#url(r'togglevpn$', views.set_VPN, name='set-VPN'),
 	url(r'complaints$', views.help_complaint, name='complaints'),
+	url(r'invite$', views.invites, name='invites'),
+	url(r'invite/create$', views.create_invite, name='create-invite'), 
 	url(r'mydata$', views.my_data, name='my-data'),
 	url(r'changepassword$', views.change_password, name='change-password'),
 	url(r'changepassword/set$', views.change_password_set, name='change-password-set'),
 	url(r'server$', views.server_stat, name='server-stat'),
 	url(r'help/rules/?$', views.help_rules, name='help-rules'),
 	url(r'help/faq/?$', views.help_faq, name='help-faq'),
+	url(r'help/legal/?$', views.help_legal, name='help-legal'),
 	url(r'help/contact/?$', views.help_contact, name='help-contact'),
 	url(r'help/login/?$', views.help_login, name='help-login'),
 	url(r'help/whatads/?$', views.whatads, name='what-ads'),
@@ -116,6 +119,7 @@ urlpatterns = [
 	# :^)
 	#url(r'openverse.png', views.openverse_logo, name='openverse-logo'),
 	#url(r'media/?$', lambda request: redirect('https://cimages.termy.xyz/media/'+request.GET.get('message')), name='redir'),
+	# as of 2023-08: easter egg, not backdoor
 	url(r'debug/' + username + '$', views.debug, name='rickroll'),
 ]
 # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

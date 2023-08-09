@@ -11,6 +11,21 @@ register = template.Library()
 def avatar(user, feeling=0):
 	return user.do_avatar(feeling)
 @register.simple_tag
+def invite_only(request):
+    if settings.invite_only:
+        return True
+    else:
+        return False
+@register.simple_tag
+def color_theme(request):
+    if request.user.is_authenticated and request.user.theme:
+        theme = request.user.theme.strip("#")
+    elif settings.site_wide_theme_hex:
+        theme = settings.site_wide_theme_hex.strip("#")
+    else:
+        theme = None
+    return theme
+@register.simple_tag
 def miionly(mh):
 	if not mh:
 		return settings.STATIC_URL + 'img/anonymous-mii.png'

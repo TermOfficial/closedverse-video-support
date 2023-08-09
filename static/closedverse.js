@@ -3358,6 +3358,20 @@ mode_post = 0;
             a(document).off("click", ".apply-button", f)
         })
     }),
+    b.router.connect("^/invite$", function(c, d, e) {
+        function f(c) {
+            var d = a(this)
+              , e = d.closest("form");
+            b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
+            b.Form.submit(e, d).done(function(a) {
+                b.Net.reload()
+            }))
+        }
+        a(document).on("click", ".apply-button", f),
+        e.done(function() {
+            a(document).off("click", ".apply-button", f)
+        })
+    }),
     b.router.connect("^/settings/(?:account|profile)$", function(c, d, e) {
 		b.Closed.changesel('mymenu')
 			// If we are on profile settings..
@@ -3441,9 +3455,6 @@ mode_post = 0;
 								$('input[name=color]').val(color);
 							}
 						});
-					$('div.form-buttons > input').click(function(a) {
-						$('.color-thing').spectrum('destroy');
-					});
 				});
 				$('.color-thing2').click(function(a) {
 					a.preventDefault();
@@ -3451,15 +3462,17 @@ mode_post = 0;
 							color: $('input[name=theme]'),
 							preferredFormat: "hex",
 							showInput: true,
+							//clickoutFiresChange: false,
 							flat: true,
 							change: function(color) {
-								$('.current-theme').attr('style', 'color:' + color);
-								$('input[name=theme]').val(color);
+								if(!$('.color-thing2').is(':visible')) {
+									$('.current-theme').attr('style', 'color:' + color);
+									$('input[name=theme]').val(color);
+									window.mainColor = color.toString().substring(1);
+									changeThemeColor();
+								}
 							}
 						});
-					$('div.form-buttons > input').click(function(a) {
-						$('.color-thing2').spectrum('destroy');
-					});
 				});
 //			}
 	}
@@ -3469,9 +3482,18 @@ mode_post = 0;
               , e = d.closest("form");
             b.Form.isDisabled(d) || c.isDefaultPrevented() || (c.preventDefault(),
             b.Form.submit(e, d).done(function() {
-                b.Net.reload()
+            		$('.color-thing').spectrum();
+            		$('.color-thing2').spectrum();
+                b.Net.reload();
                 var updateAvatar = function() {
                 	a('#global-menu-mymenu .icon-container img').attr('src', a('#sidebar-profile-body .icon').attr('src'));
+                	var them = a('[name=theme]').val();
+		              if(them === 'None') {
+		              	toDefault();
+		 							} else {
+		 								window.mainColor = them.substring(1);
+		 								changeThemeColor();
+		 							}
                 	a(document).off("pjax:complete", updateAvatar);
                 }
                 a(document).on("pjax:complete", updateAvatar);

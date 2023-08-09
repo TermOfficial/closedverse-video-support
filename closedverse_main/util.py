@@ -1,7 +1,7 @@
 import urllib.request, urllib.error
 # requests is only used for get_mii which is not being used currently
 #import requests
-#from lxml import etree
+from lxml import etree
 from random import choice
 import json
 import time
@@ -43,40 +43,41 @@ def HumanTime(date, full=False):
 				return f'{number_of_units} {unit_name} ago'
 
 # the current source as of now uses AJAX to get mii data
-# this makes it work on pythonanywhere so this is being commented for now
-"""
 def get_mii(id):
 	# Using AccountWS
 	dmca = {
 		'X-Nintendo-Client-ID': 'a2efa818a34fa16b8afbc8a74eba3eda',
 		'X-Nintendo-Client-Secret': 'c91cdb5658bd4954ade78533a339cf9a',
 	}
-	# TODO: Make this, the gravatar request, and reCAPTCHA request escape (or plainly use) URL params
-	nnid = requests.get('https://accountws.nintendo.net/v1/api/admin/mapped_ids?input_type=user_id&output_type=pid&input=' + id, headers=dmca)
-	nnid_dec = etree.fromstring(nnid.content)
-	del(nnid)
+	
+	# Perform the first request to get pid
+	url_pid = 'https://accountws.nintendo.net/v1/api/admin/mapped_ids?input_type=user_id&output_type=pid&input=' + id
+	request_pid = urllib.request.Request(url_pid, headers=dmca)
+	with urllib.request.urlopen(request_pid) as nnid_response:
+		nnid_content = nnid_response.read()
+	nnid_dec = etree.fromstring(nnid_content)
 	pid = nnid_dec[0][1].text
 	if not pid:
 		return False
-	del(nnid_dec)
-	mii = requests.get('https://accountws.nintendo.net/v1/api/miis?pids=' + pid, headers=dmca)
+	
+	# Perform the second request to get mii information
+	url_mii = 'https://accountws.nintendo.net/v1/api/miis?pids=' + pid
+	request_mii = urllib.request.Request(url_mii, headers=dmca)
+	with urllib.request.urlopen(request_mii) as mii_response:
+		mii_content = mii_response.read()
 	try:
-		mii_dec = etree.fromstring(mii.content)
-	# Can't be bothered to handle individual exceptions here
+		mii_dec = etree.fromstring(mii_content)
 	except:
 		return False
-	del(mii)
+	
 	try:
 		miihash = mii_dec[0][2][0][0].text.split('.net/')[1].split('_')[0]
 	except IndexError:
 		miihash = None
 	screenname = mii_dec[0][3].text
 	nnid = mii_dec[0][6].text
-	del(mii_dec)
 	
-	# Also todo: Return the NNID based on what accountws returns, not the user's input!!!
 	return [miihash, screenname, nnid]
-"""
 
 def recaptcha_verify(request, key):
 	if not request.POST.get('g-recaptcha-response'):

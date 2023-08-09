@@ -9,12 +9,17 @@ def user_sidebar(request, user, profile, selection=0, general=False, fr=None):
 		user.is_following = user.is_following(request.user)
 		user.is_me = user.is_me(request)
 	availableads = Ads.ads_available()
+	if user.is_authenticated:
+	    has_authority = user.has_authority(request.user)
+	else:
+	    has_authority = False
 	if (availableads):
 		ad = Ads.get_one()
 	else:
 		ad = "no ads"
 	return {
 		'request': request,
+		'has_authority': has_authority,
 		'availableads': availableads,
 		'ad': ad,
 		'user': user,
@@ -64,9 +69,10 @@ def u_post_list(posts, next_offset=None, type=2, nf_text='', time=None):
 		'type': type,
 	}
 @register.inclusion_tag('closedverse_main/elements/profile-post.html')
-def profile_post(post):
+def profile_post(post, for_announcements=False):
 	return {
 		'post': post,
+		'for_announcements': for_announcements,
 	}
 @register.inclusion_tag('closedverse_main/elements/profile-user-list.html')
 def profile_user_list(users, next_offset=None, request=None):

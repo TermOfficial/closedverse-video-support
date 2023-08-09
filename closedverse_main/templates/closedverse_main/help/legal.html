@@ -1,0 +1,15 @@
+{% extends "closedverse_main/layout.html" %}
+{% block main-body %}{% load closedverse_user %}
+{% user_sidebar request user user.profile 0 True %}
+<div class="main-column" id="help">
+	<div class="post-list-outline">
+		<h2 class="label">Legal Information</h2>
+		<div class="help-content">
+			<h2>Is this actually legal?</h2>
+			<p>Probably not.</p>
+			<h2>I'm Nintendo and I want to fucking sue you.</h2>
+			<p>Please do not do that, I have a waifu and family to feed. <a href="{% url "main:help-contact" %}">Contact me instead.</a></p>
+		</div>
+	</div>
+</div>
+{% endblock %}
