@@ -1,16 +1,16 @@
 from __future__ import unicode_literals
 from django.db import models
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import BaseUserManager
 from django.db.models import Q, QuerySet, Max, F, Count, Case, When, Exists, OuterRef, Subquery
 from django.utils import timezone
-from django.forms.models import model_to_dict
-from django.utils.dateformat import format
 from django.core.validators import RegexValidator, URLValidator
 from django.core.exceptions import ValidationError
-from datetime import timedelta, datetime, date, time
-from passlib.hash import bcrypt_sha256
+from datetime import timedelta, time
+#from passlib.hash import bcrypt_sha256
+# you may want to import django.conf.settings instead (then change checks for DEFAULT_FROM_EMAIL)
 from closedverse import settings
-from closedverse_main.context_processors import brand_name
+from closedverse_main.context_processors import brand_name, brand_logo
 from . import util
 from random import getrandbits
 import uuid, json, base64
@@ -18,7 +18,6 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.db.models.signals import pre_delete
-from django.dispatch import receiver
 import re
 import unicodedata
 import random
@@ -155,12 +154,22 @@ class ColorField(models.CharField):
 		kwargs['max_length'] = 18
 		super(ColorField, self).__init__(*args, **kwargs)
 
+# custom role in db
+class Role(models.Model):
+	id = models.AutoField(primary_key=True)
+	# determines whether to fetch role from static or media, for built-in roles
+	is_static = models.BooleanField(default=False)
+	image = models.ImageField(upload_to='roles/', max_length=100)
+	organization = models.CharField(max_length=255, blank=True, null=True)
+
+	def __str__(self):
+		return "role \"" + str(self.organization) + "\", name " + str(self.image)
+
 #mii_domain = 'https://mii-secure.cdn.nintendo.net'
 # as of writing, mii-secure is unstable, nintendo please do not f*ck me for this
 mii_domain = 'https://s3.us-east-1.amazonaws.com/mii-images.account.nintendo.net/'
 
-class User(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+class User(AbstractBaseUser):
 	id = models.AutoField(primary_key=True)
 	username = models.CharField(max_length=32, unique=True)
 	# Todo: Don't allow nickname to be null (once this is fixed, un-str-ify line 357 of views; the one with ogdata description)
@@ -174,14 +183,14 @@ class User(models.Model):
 	# LEVEL: 0-1 is default, everything else is just levels
 	level = models.SmallIntegerField(default=0)
 	# ROLE: This doesn't have anything
-	role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'cool'), (7, 'urapp'), (8, 'owner'), (9, 'badgedes'), (10, 'jack'), (11, 'verified'),))
-	#role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'Bot'), (2, 'Administrator'), (3, 'Moderator'), (4, 'NO'), (5, 'Donator'), (6, 'Tester'), (7, 'Cools'), (8, 'Developer'), (9, 'SMF9-Django'), (10, 'Staff'), (11, 'GAY DOGWATER' ), ( 12, 'DUMB SNAIL' ), (13, 'Russian ADRIAN'), (14, 'Contest'), (15, 'Gamecon'), (16, 'Cedar'), ))
+	#role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'cool'), (7, 'urapp'), (8, 'owner'), (9, 'badgedes'), (10, 'jack'), (11, 'verified'),))
+	role = models.ForeignKey(Role, blank=True, null=True, on_delete=models.SET_NULL)
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	signup_addr = models.CharField(max_length=64, null=True, blank=True)
 	user_agent = models.TextField(null=True, blank=True)
 	# C Tokens are things that let you make communities and shit.
 	c_tokens = models.IntegerField(default=1)
-	protect_data = models.BooleanField(default=False)
+	protect_data = models.BooleanField(default=False, null=True)
 	
 	# Things that don't have to do with auth lol
 	hide_online = models.BooleanField(default=False)
@@ -226,16 +235,19 @@ class User(models.Model):
 		return self.warned
 	def get_warned_reason(self):
 		return self.warned_reason
+	"""
 	def set_password(self, raw_password):
 		self.password = bcrypt_sha256.using(rounds=13).hash(raw_password)
 	def check_password(self, raw_password):
 		return bcrypt_sha256.using(rounds=13).verify(raw_password, hash=self.password)
+	"""
 	def profile(self, thing=None):
 		# If thing is specified, that field is retrieved
 		if thing:
+			# could this be shortened? or discontinued in general
 			return self.profile_set.all().values_list(thing, flat=True).first()
 		# Otherwise just get full profile
-		return self.profile_set.filter(user=self).first()
+		return self.profile_set.filter().first()
 	def gravatar(self):
 		g = util.get_gravatar(self.email)
 		if not g:
@@ -275,72 +287,29 @@ class User(models.Model):
 		return int(limit) - recent_posts
 		
 	def get_class(self):
+			"""
 			first = {
-			1: 'cool',
-			2: 'administrator',
-			3: 'moderator',
-			4: 'openverse',
-			5: 'donator',
-			6: 'cool',
-			7: 'urapp',
-			8: 'developer',
-			9: 'badgedes',
-			10: 'jack',
-			11: 'verifiedd',
+			1: '/s/img/bot.png',
+			2: '/s/img/administrator.png',
+			3: '/s/img/moderator.png',
+			9: '/s/img/badgedes.png',
 			}.get(self.role, '')
 			second = {
 			1: "Bot",
 			2: "Administrator",
 			3: "Moderator",
-			4: "O-PHP-enverse Man",
-			5: "Donator",
-			6: "Cool Person",
-			7: "cave story is okay",
-			8: "owner guy",
 			9: "Badge Designer",
-			10: "stupid man",
-			11: "Verified",
-			}.get(self.role, '')
-			""" from cedar-django
-			first = {
-			1: 'tester',
-			2: 'administrator',
-			3: 'moderator',
-			4: 'openverse',
-			5: 'donator',
-			6: 'tester',
-			7: 'urapp',
-			8: 'developer',
-			9: 'pipinstalldjango',
-			10: 'staff',
-			11: 'kanna',
-			12: 'verified',
-			13: 'artcon',
-			14: 'contest',
-			15: 'gamecom',
-			16: 'mp',
-			}.get(self.role, '')
-			second = {
-			1: "Bot",
-			2: "Administrator",
-			3: "Moderator",
-			4: "No",
-			5: "Donator",
-			6: "Tester",
-			7: "Cool Dude",
-			8: "Wii U still best console.",
-			9: "Rixy Installed Django!",
-			10: "Staff",
-			11: "GAY DOGWATER ETC",
-			12: "THE STUPIDEST ROLE IN THE WORLD",
-			13: "A   D   R   I   A   N",
-			14: "Contest Winner",
-			15: "Game Contest Winner",
-			16: "Cedar Inc.",
 			}.get(self.role, '')
 			"""
-			if first:
-				first = 'official ' + first
+			#if first:
+			#	first = 'official ' + first
+			if not self.role:
+				return [None, None]
+			#first = self.role.image
+			second = self.role.organization
+			first = self.role.image.url
+			if self.role.is_static:
+				first = settings.STATIC_URL + self.role.image.name
 			return [first, second]
 	def is_me(self, request):
 		if request.user.is_authenticated:
@@ -380,17 +349,17 @@ class User(models.Model):
 			return self.avatar
 
 	def num_yeahs(self):
-		return self.yeah_set.filter(by=self).count()
+		return self.yeah_set.count()
 	def num_posts(self):
-		return self.post_set.filter(creator=self).count()
+		return self.post_set.count()
 	def num_comments(self):
-		return self.comment_set.filter().count()
+		return self.comment_set.count()
 	def num_following(self):
-		return self.follow_source.filter().count()
+		return self.follow_source.count()
 	def num_followers(self):
-		return self.follow_target.filter().count()
+		return self.follow_target.count()
 	def num_friends(self):
-		return self.friend_source.filter().count() + self.friend_target.filter().count()
+		return self.friend_source.count() + self.friend_target.count()
 	def can_follow(self, user):
 		if UserBlock.find_block(self, user):
 			return False
@@ -420,7 +389,7 @@ class User(models.Model):
 			return False
 		return self.follow_target.filter(source=source, target=self).delete()
 	def can_block(self, source):
-		if self.can_manage() or self.level > source.level:
+		if self.can_manage() or self.level > source.level or self == source:
 			return False
 		#if source.profile('moyenne'):
 		#	return False
@@ -428,15 +397,21 @@ class User(models.Model):
 	# BLOCK this user from SOURCE
 	def make_block(self, source):
 		# trailing
-		block = UserBlock.find_block(self, source)
-		if block and block.source == source:
-			return block.delete()
+		if UserBlock.objects.filter(source=source, target=self).exists():
+			return False
+		if not self.can_block(source):
+			return False
 		fs = Friendship.find_friendship(self, source)
 		if fs:
 			fs.delete()
 		# delete any mutual follows
 		Follow.objects.filter(Q(source=self) & Q(target=source) | Q(target=self) & Q(source=source)).delete()
 		return UserBlock.objects.create(source=source, target=self)
+	def remove_block(self, source):
+		find_block = UserBlock.objects.filter(source=source, target=self)
+		if not find_block:
+			return False
+		return find_block.delete()
 	def get_posts(self, limit, offset, request, offset_time):
 		if request.user.is_authenticated:
 			has_yeah = Yeah.objects.filter(post=OuterRef('id'), by=request.user.id)
@@ -529,8 +504,13 @@ class User(models.Model):
 			except:
 				pass
 	def send_fr(self, source, body=None):
-		if not self.get_fr(source):
-			return FriendRequest.objects.create(source=source, target=self, body=body)
+		if self == source or not self.profile().can_friend(source):
+			return False
+		if self.get_fr(source):
+			return False
+		if Friendship.find_friendship(self, source):
+			return False
+		return FriendRequest.objects.create(source=source, target=self, body=body)
 	def accept_fr(self, target):
 		fr = self.get_fr(target)
 		if fr:
@@ -592,7 +572,7 @@ class User(models.Model):
 		return self.save(update_fields=['last_login'])
 
 	def has_postspam(self, body, screenshot=None, drawing=None):
-		latest_post = self.post_set.filter().order_by('-created')[:1]
+		latest_post = self.post_set.order_by('-created')[:1]
 		if not latest_post:
 			return False
 		latest_post = latest_post.first()
@@ -620,7 +600,7 @@ class User(models.Model):
 		return messages
 	def password_reset_email(self, request):
 		htmlmsg = render_to_string('closedverse_main/help/email.html', {
-			'menulogo': request.build_absolute_uri(settings.STATIC_URL + 'img/menu-logo.png'),
+			'menulogo': request.build_absolute_uri(brand_logo),
 			'contact': request.build_absolute_uri(reverse('main:help-contact')),
 			'link': request.build_absolute_uri(reverse('main:forgot-passwd')) + "?token=" + base64.urlsafe_b64encode(bytes(self.password, 'utf-8')).decode(),
 		})
@@ -683,7 +663,6 @@ class Invites(models.Model):
 		return "invite by " + str(self.creator)
 
 class Community(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	name = models.CharField(max_length=255)
 	description = models.TextField(blank=True, default='')
@@ -890,7 +869,6 @@ class CommunityFavorite(models.Model):
 		return "Community favorite by " + str(self.by) + " for " + str(self.community)
 
 class Post(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	community = models.ForeignKey(Community, null=True, on_delete=models.CASCADE)
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
@@ -945,13 +923,13 @@ class Post(models.Model):
 	def number_yeahs(self):
 		if hasattr(self, 'num_yeahs'):
 			return self.num_yeahs
-		return self.yeah_set.filter(post=self).count()
+		return self.yeah_set.count()
 	def has_yeah(self, request):
 		if request.user.is_authenticated:
 			if hasattr(self, 'yeah_given'):
 				return self.yeah_given
 			else:
-				return self.yeah_set.filter(post=self, by=request.user).exists()
+				return self.yeah_set.filter(by=request.user).exists()
 		else:
 			return False
 	def can_yeah(self, request):
@@ -977,14 +955,14 @@ class Post(models.Model):
 	def remove_yeah(self, request):
 		if not self.has_yeah(request):
 			return True
-		return self.yeah_set.filter(post=self, by=request.user).delete()
+		return self.yeah_set.filter(by=request.user).delete()
 	def number_comments(self):
 		# Number of comments cannot be accurate due to comment deleting
 		#if hasattr(self, 'num_comments'):
 		#	return self.num_comments
-		return self.comment_set.filter(original_post=self).count()
+		return self.comment_set.count()
 	def get_yeahs(self, request):
-		return Yeah.objects.filter(type=0, post=self).order_by('-created')[0:30]
+		return self.yeah_set.order_by('-created')[0:30]
 	def can_comment(self, request):
 		# TODO: Make this so that if a post's comments exceeds 100, make the user able to close the comments section
 		if self.number_comments() > 500:
@@ -1125,7 +1103,6 @@ class Post(models.Model):
 		return the_post.first()
 	
 class Comment(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	original_post = models.ForeignKey(Post, on_delete=models.CASCADE)
 	community = models.ForeignKey(Community, on_delete=models.CASCADE)
@@ -1164,13 +1141,13 @@ class Comment(models.Model):
 	def number_yeahs(self):
 		if hasattr(self, 'num_yeahs'):
 			return self.num_yeahs
-		return self.yeah_set.filter(comment=self, type=1).count()
+		return self.yeah_set.count()
 	def has_yeah(self, request):
 		if request.user.is_authenticated:
 			if hasattr(self, 'yeah_given'):
 				return self.yeah_given
 			else:
-				return self.yeah_set.filter(comment=self, type=1, by=request.user).exists()
+				return self.yeah_set.filter(by=request.user).exists()
 		else:
 			return False
 	def can_yeah(self, request):
@@ -1195,7 +1172,7 @@ class Comment(models.Model):
 	def remove_yeah(self, request):
 		if not self.has_yeah(request):
 			return True
-		return self.yeah_set.filter(comment=self, type=1, by=request.user).delete()
+		return self.yeah_set.filter(by=request.user).delete()
 	def get_yeahs(self, request):
 		return Yeah.objects.filter(type=1, comment=self).order_by('-created')[0:30]
 	def owner_post(self):
@@ -1240,7 +1217,7 @@ class Comment(models.Model):
 		self.body = funny_stupid_azz_emote_table_replace(self.body)
 
 class Yeah(models.Model):
-	# Todo: make this a plain int at some point
+	# 2023-08-16: tried to remove this but it is the primary key so it's kind of hard to change
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
 	by = models.ForeignKey(User, on_delete=models.CASCADE)
 	type = models.SmallIntegerField(default=0, choices=((0, 'post'), (1, 'comment'), ))
@@ -1253,14 +1230,13 @@ class Yeah(models.Model):
 	def __str__(self):
 		a = "from " + self.by.username + " to "
 		if self.post:
-			a += str(self.post.unique_id)
+			a += "post " + str(self.post.id)
 		elif self.comment:
-			a += str(self.comment.unique_id)
+			a += "comment " + str(self.comment.id)
 		return a
 
 class Profile(models.Model):
 	is_new = models.BooleanField(default=True)
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -1302,7 +1278,7 @@ class Profile(models.Model):
 	email_login = models.SmallIntegerField(default=1, choices=((0, 'Do not allow'), (1, 'Okay'), (2, 'Only allow')))
 	
 	def __str__(self):
-		return "profile " + str(self.unique_id) + " for " + self.user.username
+		return "profile for " + self.user.username
 	def origin_id_public(self, user=None):
 		if user == self.user:
 			return self.origin_id
@@ -1338,12 +1314,12 @@ class Profile(models.Model):
 	def can_friend(self, user=None):
 		if self.let_friendrequest == 2:
 			return False
-		#if user.is_authenticated and UserBlock.find_block(self.user, user):
-		#	return False
 		elif self.let_friendrequest == 1:
 			if not user.is_following(self.user):
 				return False
 			return True
+		if user.is_authenticated and UserBlock.find_block(self.user, user):
+			return False
 		return True
 	def got_fullurl(self):
 		if self.weblink:
@@ -1368,7 +1344,6 @@ class Profile(models.Model):
 
 class Follow(models.Model):
 	# Todo: remove this
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='follow_source', on_delete=models.CASCADE)
 	target = models.ForeignKey(User, related_name='follow_target', on_delete=models.CASCADE)
@@ -1487,7 +1462,6 @@ class Notification(models.Model):
 			return user.notification_sender.create(source=user, type=type, to=to, context_post=post, context_comment=comment)
 
 class Complaint(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	creator = models.ForeignKey(User, on_delete=models.CASCADE)
 	type = models.SmallIntegerField(choices=(
@@ -1506,7 +1480,6 @@ class Complaint(models.Model):
 		return user.complaint_set.filter(created__gt=timezone.now() - timedelta(minutes=5)).exists()
 
 class FriendRequest(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='fr_source', on_delete=models.CASCADE)
 	target = models.ForeignKey(User, related_name='fr_target', on_delete=models.CASCADE)
@@ -1522,7 +1495,6 @@ class FriendRequest(models.Model):
 		self.save()
 
 class Friendship(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='friend_source', on_delete=models.CASCADE)
 	target = models.ForeignKey(User, related_name='friend_target', on_delete=models.CASCADE)
@@ -1578,7 +1550,6 @@ class Friendship(models.Model):
 		return friends
 
 class Conversation(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	source = models.ForeignKey(User, related_name='conv_source', on_delete=models.CASCADE)
 	target = models.ForeignKey(User, related_name='conv_target', on_delete=models.CASCADE)
@@ -1598,9 +1569,9 @@ class Conversation(models.Model):
 	def set_read(self, user):
 		return self.unread(user).update(read=True)
 	def all_read(self):
-		return self.message_set.filter().update(read=True)
+		return self.message_set.update(read=True)
 	def messages(self, request, limit=50, offset=0):
-		msgs = self.message_set.filter().order_by('-created')[offset:offset + limit]
+		msgs = self.message_set.order_by('-created')[offset:offset + limit]
 		for msg in msgs:
 			msg.mine = msg.mine(request.user)
 		return msgs
@@ -1627,7 +1598,6 @@ class Conversation(models.Model):
 		new_post.mine = True
 		return new_post
 class Message(models.Model):
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 	feeling = models.SmallIntegerField(default=0, choices=feelings)
@@ -1686,8 +1656,6 @@ class ConversationInvite(models.Model):
 		return "Invite to conversation " + str(self.conversation) + " from " + str(self.source) + " to " + str(self.target)
 
 class Poll(models.Model):
-	# Todo: make this a plain int at some point
-	unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 	id = models.AutoField(primary_key=True)
 	able_vote = models.BooleanField(default=True)
 	choices = models.TextField(default="[]")
@@ -1841,7 +1809,7 @@ class Ads(models.Model):
 
 class welcomemsg(models.Model):
 	id = models.AutoField(primary_key=True)
-	order = models.IntegerField(max_length=3, default=1)
+	order = models.SmallIntegerField(default=1)
 	show = models.BooleanField(default=True)
 	created = models.DateTimeField(auto_now_add=True)
 	Title = models.CharField(max_length=256, null=False, blank=False, default='Title')

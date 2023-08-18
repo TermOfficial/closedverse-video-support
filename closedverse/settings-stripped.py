@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from django.conf.global_settings import PASSWORD_HASHERS
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -139,21 +140,28 @@ LOGGING = {
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+# only use these when debug is not enabled so that making dummy accounts in debug is easier
+if not DEBUG:
+	AUTH_PASSWORD_VALIDATORS = [
+		  {
+		      'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+		  },
+		  {
+		      'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+		  },
+		  {
+		      'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+		  },
+		  {
+		      'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+		  },
+	]
 
+# append the old passlib hasher to the end of PASSWORD_HASHERS
+# you only need this if your closedverse instance has passwords from before 08/2023, otherwise leave it commented
+# although django has a bcrypt sha256 method, it's not compatible with passlib's, which is what closedverse used
+# python3 -m pip install django-hashers-passlib
+#PASSWORD_HASHERS += ['hashers_passlib.bcrypt_sha256']
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
@@ -289,9 +297,7 @@ level_needed_to_man_users = 5
 max_icon_size = .5
 max_banner_size = 1
 
-# The minimum length required for a user's password. This is to save the users from themselves in the event of a data breach. The longer and more complex the password is, the harder it is to be cracked. (default: 7)
-# This will definitely miss a few people off who just want to sign up without worrying about long passwords.
-minimum_password_length = 7
+# minimum_password_length is removed as the AUTH_PASSWORD_VALIDATORS work as of 08/2023
 
 # The hard limit for uploading, Will cause an error if this is exceeded. This is set to 15MB by default (15728640)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800

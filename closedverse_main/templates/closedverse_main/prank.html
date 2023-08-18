@@ -195,6 +195,12 @@ document.head.appendChild(styleE);
     for(let i = 0; i < triggerLinks.length; i++) {
     	triggerLinks[i].addEventListener('click', cancelLinkClickAndTrigger);
     }
+    var buttons = document.querySelectorAll('button');
+    for(let i = 0; i < triggerLinks.length; i++) {
+      buttons[i].addEventListener('click', cancelLinkClickAndTrigger);
+    }
+		$(document).off('click');
+    $('.js-open-global-my-menu').off('click');
 }
 window.onload = reassign;
 // no update checking

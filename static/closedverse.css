@@ -625,8 +625,8 @@ body {
   width: 38px;
   height: 38px;
 }
-#global-menu li#global-menu-mymenu .icon-container img {
-  border: 1px solid #dddddd;
+#global-menu li#global-menu-mymenu .icon-container img:not(.official-tag) {
+  border: 1px solid #ddd;
   width: 36px;
   height: 36px;
   -webkit-border-radius: 5px;
@@ -1274,10 +1274,19 @@ span.owner-label {
   -o-border-radius: 5px;
   border-radius: 5px;
 }
+.official-tag {
+  position: absolute;
+  display: block;
+  margin-top: -4px;
+  margin-left: -4px;
+  top: 0;
+  width: 22px;
+  height: 22px;
+}
 .icon-container.official {
   position: relative;
 }
-.icon-container.official:after {
+/*.icon-container.official:after {
   position: absolute;
   display: block;
   margin-top: -4px;
@@ -1318,7 +1327,7 @@ span.owner-label {
 .icon-container.verifiedd:after {
   content: url("img/verified.png");
 }
-
+*/
 .multi-timeline-post-list .post .icon-container.offline:before,
 .multi-timeline-post-list .post .icon-container.online:before,
 .multi-timeline-post-list .post .icon-container.afk:before {
@@ -1377,7 +1386,7 @@ span.owner-label {
   width: 9px;
   height: 9px;
 }*/
-
+/*
 .post-permalink-feeling-icon.administrator {
   position: relative;
 }
@@ -1488,7 +1497,7 @@ span.owner-label {
   left: 0;
   width: 22px;
   height: 22px;
-}
+}*/
 .button {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -6157,7 +6166,10 @@ h2.label-topic_post .label-topic_post-msgid {
   height: 48px;
   margin: 2px;
 }
-#empathy-content .post-permalink-feeling-icon img {
+#empathy-content .post-permalink-feeling-icon .official-tag {
+  top: 8px;
+}
+#empathy-content .post-permalink-feeling-icon .user-icon {
   width: 46px;
   height: 46px;
   border: 1px solid #222;
@@ -6698,7 +6710,7 @@ h2.label-topic_post .label-topic_post-msgid {
 }
 .index-memo h2:not(.label) {
   margin-bottom: 5px;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 #help .help-content .num1 h2 {
   margin-top: 0;
@@ -7158,6 +7170,9 @@ h2.label-topic_post .label-topic_post-msgid {
     box-shadow: none;
     background-color: #f4f4f4;
   }
+  #global-menu .official-tag {
+    top: 0px;
+  }
   #global-menu li#global-menu-feed a,
   #global-menu li#global-menu-community a {
     padding-left: 0;
@@ -7581,7 +7596,7 @@ margin: 10px 0px 15px !important;
   .simple-wrapper.simple-wrapper-content #main-body {
     border: none;
   }
-  #empathy-content .icon-container.donator:after,
+  /*#empathy-content .icon-container.donator:after,
   #reply-content .icon-container.donator:after,
   .news-list .icon-container.donator:after {
     content: url(img/donator.png);
@@ -7644,6 +7659,7 @@ margin: 10px 0px 15px !important;
     width: 17px;
     height: 17px;
   }
+  */
   .button {
     font-size: 14px;
     width: 85%;
@@ -8431,7 +8447,10 @@ margin: 10px 0px 15px !important;
     height: 38px;
     margin: 2px 1.5px 1px 1.5px;
   }
-  #empathy-content .post-permalink-feeling-icon img {
+  #empathy-content .post-permalink-feeling-icon .official-tag {
+  	top: 8px;
+	}
+  #empathy-content .post-permalink-feeling-icon .user-icon {
     width: 36px;
     height: 36px;
   }
@@ -8847,9 +8866,10 @@ margin: 10px 0px 15px !important;
 }
 .login-page {
 text-align: center;
+padding: 10px;
 }
 .login-page > form > img {
-margin-top: 30px;
+margin-top: 20px;
 margin-bottom: 10px;
 max-width: 95%;
 }
@@ -8859,7 +8879,7 @@ font-size: 20px;
 }
 .login-page .ll {
 margin-top: 20px;
-margin-bottom: 20px;
+margin-bottom: 10px;
 }
 .login-page a:hover {
   text-decoration: underline;
@@ -8870,14 +8890,16 @@ display: block;
 width: 50%;
 }
 .index-memo {
-margin-top: 10px;
 text-align: center;
+}
+.index-memo > div {
+padding: 10px;
 }
 .index-memo p {
 width:90%;
 display:inline-block;
 }
-#empathy-content .post-permalink-feeling-icon img {
+#empathy-content .post-permalink-feeling-icon .user-icon {
 border: 1px solid #dddddd;
 }
 

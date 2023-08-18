@@ -2,12 +2,14 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadReque
 from django.template import loader
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
-from django.views.decorators.csrf import csrf_exempt
+#from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.core.validators import EmailValidator
 from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import update_session_auth_hash
 from django.db.models import Q, Count, Exists, OuterRef
 from django.db.models.functions import Now
 from .models import *
@@ -16,16 +18,12 @@ from closedverse import settings
 import re
 from django.urls import reverse
 from random import getrandbits
-from random import choice
-from json import dumps, loads
-import sys, traceback
-import base64
+import json
+import traceback
 import subprocess
 from datetime import datetime, timedelta
 from django.utils import timezone
-import django.utils.dateformat
-from binascii import hexlify
-from os import urandom
+from django.contrib.auth.hashers import identify_hasher
 
 #from silk.profiling.profiler import silk_profile
 
@@ -190,8 +188,9 @@ def community_favorites(request):
 def login_page(request):
 	"""Login page! using our own user objects."""
 	# Redirect the user to / if they're logged in, forcing them to log out
+	location = '/'
 	if request.user.is_authenticated:
-		return redirect('/')
+		return redirect(location)
 	if request.method == 'POST':
 		# If we don't have all of the POST parameters we want..
 		if not (request.POST['username'] and request.POST['password']):
@@ -213,7 +212,18 @@ def login_page(request):
 			successful = False if user[1] is False or not user[0].is_active() else True
 			LoginAttempt.objects.create(user=user[0], success=successful, user_agent=request.META.get('HTTP_USER_AGENT'), addr=request.META.get('REMOTE_ADDR'))
 			if user[1] == False:
-				return HttpResponse("Invalid password.", status=401)
+				# check if a hasher could not be identified due to moving from passlib
+				try:
+					# will throw a ValueError if no hasher is found
+					identify_hasher(user[0].password)
+				except ValueError as e:
+					# error says "Unknown password hashing algorithm ''......", meaning that the password is not converted
+					if '\'\'' in str(e):
+						return HttpResponseBadRequest("The password is either encoded in an unsupported format, or the passwords haven't been updated yet. As part of a recent update, passwords need to be converted - sorry about that. If password resets work, you can use that to make your account usable immediately.")
+					else:
+						return HttpResponseBadRequest("The password is either encoded in an unsupported format, or the settings haven't been updated yet. Please add - or direct the server owner to add - hashers_passlib.bcrypt_sha256 to settings.PASSWORD_HASHERS, and then install django-hashers-passlib. I'm sorry for the inconvenience! If password resets work, you can use that immediately.")
+				else:
+					return HttpResponse("Invalid password.", status=401)
 			#is or ==?			
 			elif user[1] == 2:
 				return HttpResponse("This account's password needs to be reset. Contact an admin or reset by email.", status=400)
@@ -227,14 +237,17 @@ def login_page(request):
 		#if request.META['HTTP_REFERER'] and "login" not in request.META['HTTP_REFERER'] and request.META['HTTP_HOST'] in request.META['HTTP_REFERER']:
 		#	location = request.META['HTTP_REFERER']
 		#else:
-		location = '/'
 		if request.GET.get('next'):
 			location = request.GET['next']
-		return HttpResponse(location)
+		if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+			# because if you respond to an ajax with a redirect, the response will just be the page, you can't get the redirect value from js
+			return HttpResponse(location)
+		return redirect(location)
 	else:
 		return render(request, 'closedverse_main/login_page.html', {
 			'title': 'Log in',
 			'allow_signups': settings.allow_signups,
+			'reset_supported': hasattr(settings, 'DEFAULT_FROM_EMAIL'),
 			#'classes': ['no-login-btn']
 		})
 def signup_page(request):
@@ -313,8 +326,14 @@ def signup_page(request):
 		if not request.POST['password'] == request.POST['password_again']:
 			return HttpResponseBadRequest("Your passwords don't match.")
 		# do the length check
-		if len(request.POST['password']) < settings.minimum_password_length:
-			return HttpResponseBadRequest('The password must be at least ' + str(settings.minimum_password_length) + ' characters long.')
+		#if len(request.POST['password']) < settings.minimum_password_length:
+		#	return HttpResponseBadRequest('The password must be at least ' + str(settings.minimum_password_length) + ' characters long.')
+		# use native django password validators, which can include length check
+		try:
+			# todo if you include the user object here it would help validate against some user attributes however this form is not the one that actually makes the account sooo not really doable unless a dummy user object is created for the sole purpose of this check which would be dumb
+			validate_password(request.POST['password'])
+		except ValidationError as error:
+			return HttpResponseBadRequest(error)
 		if not request.POST['nickname']:
 			return HttpResponseBadRequest("You need a nickname. What else are we gonna call you????? Ghosty?")
 		if request.POST['nickname'] and len(request.POST['nickname']) > 32:
@@ -368,7 +387,9 @@ def signup_page(request):
 		LoginAttempt.objects.create(user=make, success=True, user_agent=request.META.get('HTTP_USER_AGENT'), addr=request.META.get('REMOTE_ADDR'))
 		login(request, make)
 		request.session['passwd'] = make.password
-		return HttpResponse("/")
+		if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+			return HttpResponse('/')
+		return redirect('/')
 	else:
 		if not settings.RECAPTCHA_PUBLIC_KEY:
 			settings.RECAPTCHA_PUBLIC_KEY = None
@@ -388,11 +409,11 @@ def forgot_passwd(request):
 		try:
 			user = User.objects.get(email=request.POST['email'])
 		except (User.DoesNotExist, ValueError):
-			return HttpResponseNotFound("There isn't a user with that email address.")
+			return HttpResponseNotFound("The email address could not be found.")
 		try:
 			user.password_reset_email(request)
-		except:
-			return HttpResponseBadRequest("There was an error submitting that.")
+		except Exception as error:
+			return HttpResponseBadRequest("There was an error submitting that, sorry! Here's why: " + str(error))
 		return HttpResponse("Success! Check your emails, it should have been sent from \"{0}\".".format(settings.DEFAULT_FROM_EMAIL))
 	if request.GET.get('token'):
 		user = User.get_from_passwd(request.GET['token'])
@@ -401,6 +422,10 @@ def forgot_passwd(request):
 		if request.method == 'POST':
 			if not request.POST['password'] == request.POST['password_again']:
 				return HttpResponseBadRequest("Your passwords don't match.")
+			try:
+				validate_password(new, user=user)
+			except ValidationError as error:
+				return HttpResponseBadRequest(error)
 			user.set_password(request.POST['password'])
 			user.save()
 			return HttpResponse("Success! Now you can log in with your new password!")
@@ -411,13 +436,18 @@ def forgot_passwd(request):
 		})
 	return render(request, 'closedverse_main/forgot_page.html', {
 		'title': 'Reset password',
+		'reset_supported': hasattr(settings, 'DEFAULT_FROM_EMAIL'),
 		#'classes': ['no-login-btn'],
 	})
 
 def logout_page(request):
 	"""Password email page / post endpoint."""
-	if not request.user.is_active():
-		r = HttpResponseForbidden("You can't log out while you're inactive. According to me and God, you'll just have to sit here and suffer for now. Go contemplate your actions. You will be redirected to Wario Land 4 momentarily.", content_type='text/plain')
+	if not request.user.is_authenticated or not request.user.is_active():
+		if not request.user.is_authenticated:
+			logout(request)
+			r = HttpResponseForbidden("You are not logged in, so how can you possibly log out? You will be redirected to Wario Land 4 momentarily.", content_type='text/plain')
+		else:
+			r = HttpResponseForbidden("You can't log out while you're inactive. According to me and God, you'll just have to sit here and suffer for now. Go contemplate your actions. You will be redirected to Wario Land 4 momentarily.", content_type='text/plain')
 		r['Refresh'] = '7; url=https://gba.js.org/player#warioland4'
 		return r
 	logout(request)
@@ -529,7 +559,7 @@ def user_view(request, username):
 				user.avatar = request.POST.get('mh')
 				#profile.origin_id = getmii[2]
 				profile.origin_id = request.POST['origin_id']
-				profile.origin_info = dumps([request.POST.get('mh'), 'if you see this then something is wrong', request.POST['origin_id']])
+				profile.origin_info = json.dumps([request.POST.get('mh'), 'if you see this then something is wrong', request.POST['origin_id']])
 		# set the username color
 		if request.POST.get('color'):
 			try:
@@ -1136,11 +1166,8 @@ def post_create(request, community):
 	if request.method == 'POST':
 		# Wake
 		request.user.wake(request.META['REMOTE_ADDR'])
-		# Required
-		if not (request.POST.get('community')):
-			return HttpResponseBadRequest()
 		try:
-			community = Community.objects.get(id=community, unique_id=request.POST['community'])
+			community = Community.objects.get(id=community)
 		except (Community.DoesNotExist, ValueError):
 			return HttpResponseNotFound()
 		# Method of Community
@@ -1361,13 +1388,13 @@ def comment_delete_yeah(request, comment):
 @require_http_methods(['POST'])
 @login_required
 def poll_vote(request, poll):
-	the_poll = get_object_or_404(Poll, unique_id=poll)
+	the_poll = get_object_or_404(Poll, id=poll)
 	the_poll.vote(request.user, request.POST.get('a'))
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
 def poll_unvote(request, poll):
-	the_poll = get_object_or_404(Poll, unique_id=poll)
+	the_poll = get_object_or_404(Poll, id=poll)
 	the_poll.unvote(request.user)
 	return HttpResponse()
 
@@ -1457,6 +1484,18 @@ def user_addblock(request, username):
 	user = get_object_or_404(User, username=username)
 	user.make_block(request.user)
 	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
+def user_rmblock(request, username):
+	user = get_object_or_404(User, username=username)
+	user.remove_block(request.user)
+	return HttpResponse()
+@login_required
+def user_blocklist(request):
+	blocks = UserBlock.objects.filter(source=request.user).order_by('-created')[:50]
+	return render(request, 'closedverse_main/block-list.html', {
+		'blocks': blocks,
+	})
 
 # Notifications work differently since the Openverse rebranding. (that we changed back)
 # They used to respond with a JSON for values for unread notifications and messages.
@@ -1680,7 +1719,10 @@ def messages_read(request, username):
 @require_http_methods(['POST'])
 @login_required
 def message_rm(request, message):
-	message = get_object_or_404(Message, unique_id=message)
+	message = get_object_or_404(Message, id=message)
+	# check that if you aren't the conversation source or target (so if you aren't inside the conversation)
+	if message.conversation.source != request.user and message.conversation.target != request.user:
+		raise Http404()
 	message.rm(request)
 	return HttpResponse()
 
@@ -2031,11 +2073,16 @@ def change_password_set(request):
 		if not user.check_password(old):
 			return json_response('The old password specified does not match the user\'s password. Enter the password you use as of right now.')
 		# do the length check
-		if len(new) < settings.minimum_password_length:
-			return json_response('The new password must be at least ' + str(settings.minimum_password_length) + ' characters long.')
+		#if len(new) < settings.minimum_password_length:
+		#	return json_response('The new password must be at least ' + str(settings.minimum_password_length) + ' characters long.')
+		try:
+			validate_password(new, user=user)
+		except ValidationError as error:
+			return json_response(error)
 		# do the thing
 		user.set_password(new)
 		user.save()
+		update_session_auth_hash(request, user)
 		return json_response("Success! Now you can log in with your new password!")
 	else:
 		raise Http404

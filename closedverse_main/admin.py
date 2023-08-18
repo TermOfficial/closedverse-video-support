@@ -50,7 +50,7 @@ def Disable_user(modeladmin, request, queryset):
 	queryset.update(active = False)
 
 class UserAdmin(admin.ModelAdmin):
-	search_fields = ('id', 'unique_id', 'username', 'nickname', 'email', 'addr', )
+	search_fields = ('id', 'username', 'nickname', 'email', 'addr', )
 	list_display = ('id', 'username', 'nickname', 'warned', 'level', 'staff', 'active', )
 	#exclude = ('addr', 'signup_addr', 'password', )
 	exclude = ('password', )
@@ -60,7 +60,7 @@ class UserAdmin(admin.ModelAdmin):
 	#form = UserForm
 
 class ProfileAdmin(admin.ModelAdmin):
-	search_fields = ('id', 'unique_id', 'origin_id', )
+	search_fields = ('id', 'origin_id', )
 	raw_id_fields = ('user', 'favorite', )
 	list_display = ('id', 'user', 'comment', 'let_freedom', )
 
@@ -68,12 +68,12 @@ class ComplaintAdmin(admin.ModelAdmin):
 	search_fields = ('id', 'unique_id', 'body', )
 	raw_id_fields = ('creator', )
 class ConversationAdmin(admin.ModelAdmin):
-	search_fields = ('id', 'unique_id', )
+	search_fields = ('id', )
 	raw_id_fields = ('source', 'target', )
 
 class PostAdmin(admin.ModelAdmin):
 	raw_id_fields = ('creator', 'poll', )
-	search_fields = ('id', 'unique_id', 'body', 'creator__username', )
+	search_fields = ('id', 'body', 'creator__username', )
 	list_display = ('id', 'creator', 'body', 'is_rm', )
 	actions = [Hide_content, Show_content]
 	def get_queryset(self, request):
@@ -81,7 +81,7 @@ class PostAdmin(admin.ModelAdmin):
 
 class CommentAdmin(admin.ModelAdmin):
 	raw_id_fields = ('creator', 'original_post', )
-	search_fields = ('id', 'unique_id', 'body', 'creator__username', )
+	search_fields = ('id', 'body', 'creator__username', )
 	list_display = ('id', 'creator', 'body', 'original_post', 'is_rm', )
 	actions = [Hide_content, Show_content]
 	def get_queryset(self, request):
@@ -90,14 +90,14 @@ class CommentAdmin(admin.ModelAdmin):
 class CommunityAdmin(admin.ModelAdmin):
 	raw_id_fields = ('creator', )
 	list_display = ('id', 'name', 'description', 'type', 'creator', 'popularity', 'is_rm', 'is_feature', 'require_auth')
-	search_fields = ('id', 'unique_id', 'name', 'description', )
+	search_fields = ('id', 'name', 'description', )
 	actions = [Hide_content, Show_content, Feature_community, Unfeature_community, force_login, unforce_login]
 	def get_queryset(self, request):
 		return models.Community.real.get_queryset()
 
 class MessageAdmin(admin.ModelAdmin):
 	raw_id_fields = ('creator', 'conversation', )
-	search_fields = ('id', 'unique_id', 'body', 'creator__username', )
+	search_fields = ('id', 'body', 'creator__username', )
 	list_display = ('id', 'creator', 'conversation', 'body', )
 	actions = [Hide_content, Show_content]
 	def get_queryset(self, request):
@@ -132,10 +132,14 @@ class HistoryAdmin(admin.ModelAdmin):
 		raw_id_fields = ('user',)
 		list_display = ('id', 'user')
 
+class RoleAdmin(admin.ModelAdmin):
+		exclude = ('is_static', )
+
 #class BlockAdmin(admin.ModelAdmin)
 
 admin.site.unregister(Group)
 
+admin.site.register(models.Role, RoleAdmin)
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Profile, ProfileAdmin)
 admin.site.register(models.Community, CommunityAdmin)

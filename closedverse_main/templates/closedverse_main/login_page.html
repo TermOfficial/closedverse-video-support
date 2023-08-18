@@ -3,7 +3,7 @@
 <div class="main-column center">
     <div class="post-list-outline login-page">
         <form method="post">
-			<img src="{% static "img/menu-logo.png" %}">
+			<img src="{{ brand_logo }}">
 			<p class="lh">Log In</p>
 			<p>Sign in with a {{ brand_name }} account to create and give Yeahs to posts and comments, edit your profile, and connect with other {{ brand_name }} users.</p>
 			<h3 class="label"><label>User ID: <input type="text" class="auth-input" name="username" maxlength="32" placeholder="User ID"></label></h3>
@@ -14,17 +14,17 @@
 
 			<button type="submit" class="button">Sign In</button>
 
-			{% if allow_signups %}
 			<div class="ll">
+				{% if allow_signups %}
 				<p>If you don't have an account, <a href="{% url "main:signup" %}"><b>sign up</b> here.</a></p>
+				{% else %}
+			    <p>Signing up is disabled for now, check back later.</p>
+				{% endif %}
+				{% if reset_supported %}
 				<p>If you forgot your password, <a href="{% url "main:forgot-passwd" %}"><b>reset</b> it here.</a></p>
+				{% endif %}
 				<br><p>If you need help with logging in, see the <a href="{% url "main:help-login" %}"><b>login help</b></a> page.</p>
 			</div>
-			{% else %}
-			<div class="ll">
-			    <p>Signing up is disabled for now, check back later.</p>
-			</div>
-			{% endif %}
 		</form>
 	</div>
 </div>
