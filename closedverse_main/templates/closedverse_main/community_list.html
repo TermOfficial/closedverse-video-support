@@ -10,9 +10,18 @@
 			</div>
 		</div>-->
 		
-		{% if user.is_warned %}
+		{% if user.is_warned and user.is_active %}
 		<div class="notice" style="background-color: #ffc783;border: 1px solid #ffb358;">
 		<p><b>WARNING</b>: You have been issued a warning by an administrator. No features have been restricted, as this is just a warning.
+		<div> 
+		{% if user.get_warned_reason %}
+		<p>Reason: "{{ user.get_warned_reason }}"</p>
+		{% endif %}
+		</div>
+		</div>
+		{% elif not user.is_active and user.is_authenticated %}
+		<div class="notice" style="background-color: #ff9797; border: 1px solid #ff5252">
+		<p><b>Oops</b>: You've been smacked by an admin. Better luck next time.
 		<div> 
 		{% if user.get_warned_reason %}
 		<p>Reason: "{{ user.get_warned_reason }}"</p>
@@ -97,7 +106,7 @@
 			{% if user_communities %}<a href="{% url "main:community-viewall" "usr" %}" class="big-button">Show more</a>{% endif %}
 			{% community_page_element my_communities "My Communities" %}
 
-			{% if not feature.count and not game.count and not special.count and not user_communities.count and not my_communities.count %}
+			{% if not feature and not game and not special and not user_communities and not my_communities %}
 				<div class="post-list-outline">
 				{% nocontent "There are no communities of any kind yet. You can either create one in the admin panel, or make a user-created community once you sign up." %}
 				</div>

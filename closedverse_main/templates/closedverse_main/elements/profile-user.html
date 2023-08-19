@@ -8,7 +8,6 @@
 </div>
 {% endif %}
 
-
   <div class="body">
     <p class="title">
       <span class="nick-name"><a {% if user.color %}style=color:{{ user.color }}{% endif %} href="{% url "main:user-view" user.username %}">{{ user.nickname }}</a></span>

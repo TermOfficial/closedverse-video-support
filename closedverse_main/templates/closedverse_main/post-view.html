@@ -19,6 +19,9 @@
 	  {% if post.is_mine and post.screenshot %}
 	  <button type="button" class="symbol button edit-button profile-post-button{% if post.is_favorite %} done {% endif %}" data-action="{% if post.is_favorite %}{% url "main:post-unset-profile" post.id %}{% else %}{% url "main:post-set-profile" post.id %}{% endif %}"><span class="symbol-label">Set as profile post</span></button>
 	  {% endif %}
+	  {% if post.can_lock_comments %}
+	  <button type="button" class="symbol button edit-button lock-comments-button" data-action="{% url "main:lock-the-comments" post.id %}"><span class="symbol-label">Lock comments</span></button>
+	  {% endif %}
     </div>
 	{% endif %}
 {% endif %}
@@ -129,7 +132,13 @@
 </div>
 {% elif not post.can_comment %}
 <div class="cannot-reply"><div>
+  {% if post.lock_comments == 1 %}
+  <p>{{ post.creator.nickname }} has locked the comments.</p>
+  {% elif post.lock_comments == 2 %}
+  <p>The comments have been locked up tight.</p>
+  {% else %}
   <p>You cannot comment on this post.</p>
+  {% endif %}
 </div></div>
 {% else %}
 {% comment_form post request.user %}

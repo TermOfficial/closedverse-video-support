@@ -1,11 +1,11 @@
 {% extends "closedverse_main/layout.html" %}
-{% load static %}{% block main-body %}
+{% block main-body %}
 <div class="main-column center">
     <div class="post-list-outline login-page">
         <form method="post">
 			<img src="{{ brand_logo }}">
 			<p class="lh">{{ title }}</p>
-			<p>Welcome back, {{ user.username }}! It's time to reset your password.</p>
+			<p>Welcome back, {{ user.username }}. It's time to reset your password.</p>
 				<h3 class="label"><label>New password: <input type="password" class="auth-input" name="password" placeholder="Password" required></label></h3>
 				<h3 class="label"><label>Confirm new password: <input type="password" class="auth-input" name="password_again" placeholder="Password again" required></label></h3>
 				{% csrf_token %}
@@ -15,7 +15,7 @@
 
 		</form>
 			<div class="ll">
-				<p>Having issues? Want to get back into your account? Try <a href="{% url "main:help-contact" %}">contacting us</a> if you need help with this.</p>
+				<p>Once finished, you should be able to log back into your account with the password you set. Please <a href="{% url "main:help-contact" %}">contact us</a> if you need help with this.</p>
 			</div>
 	</div>
 </div>

@@ -55,7 +55,6 @@
 	{% endif %}
 	{% if not general and not user.is_me and profile.can_block %}
 	<div class="report-buttons-content">
-		<!-- for later use <button type="button" class="report-button report-user" data-track-label="user" data-track-action="openReportModal" data-track-category="reportViolator" data-modal-open="#report-violator-page">Report Violation</button> -->
 		<button type="button" class="report-button block-button">{% if profile.is_blocked %}Unblock{% else %}Block{% endif %}</button>
 	</div>
 	{% endif %}
@@ -114,7 +113,7 @@
         </span>
       </a>
 	  {% endif %}
-	  {% if profile.yeahs_visible and request.user.is_authenticated %}
+	  {% if profile.yeahs_visible %}
       <a href="{% url "main:user-yeahs" user.username %}" class="sidebar-menu-empathies with-count symbol{% if selection == 2 %} selected{% endif %}">
         <span>Yeahs Given</span>
         <span class="post-count">
@@ -186,7 +185,7 @@
 		{% endif %}
 		{% if profile.external %}
 		<div class="data-content">
-			<h4><span>Discord Tag</span></h4>
+			<h4><span>Discord</span></h4>
 			<div class="note">
 				<span>{{ profile.external }}</span>
 			</div>

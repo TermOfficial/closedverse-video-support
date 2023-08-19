@@ -616,10 +616,10 @@ var Olv = Olv || {};
             a(window).on("click submit", this.onMayLeavePage)
         },
         onDataHrefClick: function(c) {
-			if (a(c.target).attr("data-href")) {
+            if (a(c.target).attr("data-href")) {
                 b.Net.go($(this).attr("data-href"));
                 return;
-			}
+            }
             if (!c.isDefaultPrevented() && !a(c.target).closest("a,button").length) {
                 var d = a(this);
                 if (!d.hasClass("disabled")) {
@@ -2595,7 +2595,6 @@ var Olv = Olv || {};
 		b.Closed.changesel("news");
 		$('.received-request-button').on('click', function(a) {
 			a.preventDefault()
-			window.ass = a
 			fr = new b.ModalWindow($('div[data-modal-types=accept-friend-request][data-action="'+ $(this).parent().parent().data('action') +'"]'));fr.open();
 		})
 		$('div[data-modal-types=accept-friend-request] .ok-button.post-button').on('click', function(a){
@@ -2938,6 +2937,17 @@ $('.post-poll .poll-votes').on('click', function() {
 			b.showConfirm("Delete post", "Really delete this post?")
 				$('.ok-button').on('click',function(){
 					b.Form.post(rm_btn.attr('data-action')).done(b.showMessage("", "Deleted."))
+				})
+		})
+	}
+	lock_comments_button = $('.lock-comments-button')
+	if(lock_comments_button.length) {
+		lock_comments_button.on('click',function(){
+			b.showConfirm("Lock comments", "Really lock up the comments? This cannot be undone.")
+				$('.ok-button').on('click',function(){
+					b.Form.post(lock_comments_button.attr('data-action')).done(function() {
+						b.Net.reload();
+					});
 				})
 		})
 	}

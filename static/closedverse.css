@@ -1543,6 +1543,9 @@ span.owner-label {
 .button.edit-post-button:before {
   content: "J" !important;
 }
+.button.lock-comments-button:before {
+  content: "p" !important;
+}
 .button.rm-post-button:before {
   content: "d" !important;
 }

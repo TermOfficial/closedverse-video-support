@@ -159,8 +159,8 @@ class Role(models.Model):
 	id = models.AutoField(primary_key=True)
 	# determines whether to fetch role from static or media, for built-in roles
 	is_static = models.BooleanField(default=False)
-	image = models.ImageField(upload_to='roles/', max_length=100)
-	organization = models.CharField(max_length=255, blank=True, null=True)
+	image = models.ImageField(upload_to='roles/', max_length=100, help_text='Upload an icon that will show on the top right of one\'s profile.')
+	organization = models.CharField(max_length=255, blank=True, null=True, help_text='Text that shows above one\'s username')
 
 	def __str__(self):
 		return "role \"" + str(self.organization) + "\", name " + str(self.image)
@@ -184,20 +184,19 @@ class User(AbstractBaseUser):
 	level = models.SmallIntegerField(default=0)
 	# ROLE: This doesn't have anything
 	#role = models.SmallIntegerField(default=0, choices=((0, 'normal'), (1, 'bot'), (2, 'administrator'), (3, 'moderator'), (4, 'openverse'), (5, 'donator'), (6, 'cool'), (7, 'urapp'), (8, 'owner'), (9, 'badgedes'), (10, 'jack'), (11, 'verified'),))
-	role = models.ForeignKey(Role, blank=True, null=True, on_delete=models.SET_NULL)
+	role = models.ForeignKey(Role, blank=True, null=True, on_delete=models.SET_NULL, help_text='This will show a funny badge and text on this user\'s profile. This does not grant the user any additional power and is only visual.')
 	addr = models.CharField(max_length=64, null=True, blank=True)
 	signup_addr = models.CharField(max_length=64, null=True, blank=True)
 	user_agent = models.TextField(null=True, blank=True)
 	# C Tokens are things that let you make communities and shit.
-	c_tokens = models.IntegerField(default=1)
-	protect_data = models.BooleanField(default=False, null=True)
+	c_tokens = models.IntegerField(default=1, help_text='How many communities should this user be allowed to make?')
+	protect_data = models.BooleanField(default=False, null=True, help_text='Prevent people from lookin\' at private data for this user.')
 	
 	# Things that don't have to do with auth lol
 	hide_online = models.BooleanField(default=False)
 	color = ColorField(default='', null=True, blank=True)
 	
 	staff = models.BooleanField(default=False)
-	#active = models.SmallIntegerField(default=1, choices=((0, 'Disabled'), (1, 'Good'), (2, 'Redirect')))
 	active = models.BooleanField(default=True)
 	can_invite = models.BooleanField(default=True)
 	warned = models.BooleanField(default=False)
@@ -607,6 +606,7 @@ class User(AbstractBaseUser):
 		subj = '{1} password reset for "{0}"'.format(self.username, brand_name)
 		return send_mail(
 		subject=subj, 
+		message='',
 		html_message=htmlmsg,
 		from_email="{1} <{0}>".format(settings.DEFAULT_FROM_EMAIL, brand_name),
 		recipient_list=[self.email],
@@ -756,7 +756,19 @@ class Community(models.Model):
 					#print(str(post) + ' to ' + str(self.creator) + ':' + str(post.user_is_blocked))
 				post.recent_comment = post.recent_comment()
 		return posts
+
+	def Community_block(self, request):
+		# This goes both ways.
+		if request.user.is_authenticated and not request.user.can_manage():
+			if UserBlock.find_block(self.creator, request.user):
+				return True
+		return False
+
 	def post_perm(self, request):
+		if not request.user.active:
+			return False
+		if self.Community_block(request):
+			return False
 		if request.user.level >= self.rank_needed_to_post:
 			return True
 		elif request.user.staff == True:
@@ -811,7 +823,7 @@ class Community(models.Model):
 				URLValidator()(value=request.POST['url'])
 			except ValidationError:
 				return 5
-		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen')):
+		if not request.user.has_freedom() and (request.POST.get('url') or request.FILES.get('screen') or request.FILES.get('video')):
 			return 6
 		if not request.user.is_active():
 			return 6
@@ -879,6 +891,7 @@ class Post(models.Model):
 	url = models.URLField(max_length=1200, null=True, blank=True, default='')
 	spoils = models.BooleanField(default=False)
 	disable_yeah = models.BooleanField(default=False)
+	lock_comments = models.SmallIntegerField(default=0, choices=((0, 'Not locked'), (1, 'Locked by user'), (2, 'Locked by mod')))
 	created = models.DateTimeField(auto_now_add=True)
 	edited = models.DateTimeField(auto_now=True)
 	befores = models.TextField(null=True, blank=True)
@@ -935,8 +948,8 @@ class Post(models.Model):
 	def can_yeah(self, request):
 		if not request.user.is_authenticated or not request.user.is_active():
 			return False
-		# why did cedar-django do this? god knows
-		#return True
+		if self.community.Community_block(request):
+			return False
 		if self.is_mine(request.user) or UserBlock.find_block(self.creator, request.user):
 			return False
 		return True
@@ -964,12 +977,44 @@ class Post(models.Model):
 	def get_yeahs(self, request):
 		return self.yeah_set.order_by('-created')[0:30]
 	def can_comment(self, request):
-		# TODO: Make this so that if a post's comments exceeds 100, make the user able to close the comments section
 		if self.number_comments() > 500:
+			return False
+		if not request.user.active:
+			return False
+		# yeah this is fucking nuts. It's basically a ban from an entire community.
+		if self.community.Community_block(request):
+			return False
+		if self.lock_comments != 0:
 			return False
 		if UserBlock.find_block(self.creator, request.user):
 			return False
 		return True
+
+	def can_lock_comments(self, request):
+		if self.lock_comments != 0:
+			return False
+		# If you are a mod, you can bypass the timer
+		# The timer is a personal choice of mine, I don't want users to pussy out of a fight too early or whatever.
+		# Always annoys me when someone has a dumb ass take only for them to turn off the comments immediately.
+		if self.created < timezone.now() - timedelta(hours=2) or request.user.can_manage():
+			if self.creator == request.user:
+				return True
+		if not self.creator.has_authority(request.user) and request.user.can_manage():
+			return True
+		return False
+		
+	def lock_the_comments_up(self, request):
+		if request and self.can_lock_comments(request):
+			if self.is_mine(request.user):
+				self.lock_comments = 1
+			else:
+				self.lock_comments = 2
+				AuditLog.objects.create(type=3, post=self, user=self.creator, by=request.user)
+			self.save()
+			return True
+		else:
+			return False
+			
 	def get_comments(self, request=None, limit=0, offset=0):
 		if request.user.is_authenticated:
 			blocked_me = request.user.block_target.filter().values('source')
@@ -1274,7 +1319,7 @@ class Profile(models.Model):
 	# Post limit, 0 for none
 	limit_post = models.SmallIntegerField(default=0)
 	# If this is true, the user can't change their avatar or nickname
-	cannot_edit = models.BooleanField(default=False)
+	cannot_edit = models.BooleanField(default=False, help_text='Make it so this user cannot change settings.')
 	email_login = models.SmallIntegerField(default=1, choices=((0, 'Do not allow'), (1, 'Okay'), (2, 'Only allow')))
 	
 	def __str__(self):
@@ -1747,7 +1792,7 @@ class UserBlock(models.Model):
 class AuditLog(models.Model):
 	id = models.AutoField(primary_key=True)
 	created = models.DateTimeField(auto_now_add=True)
-	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Generate passwd reset"), (4, "User delete"), (5, "Image delete"), (6, "Purge 1"), (7, "Purge 2"), (8, "Purge 3"), (9, "Purge 4"), (10, "Purge 5"), (11, "Un-purge 1"), (12, 'Changed server settings'), ))
+	type = models.SmallIntegerField(choices=((0, "Post delete"), (1, "Comment delete"), (2, "User edit"), (3, "Disable comments"), (4, "User delete"), (5, "Image delete"), (6, "Purge 1"), (7, "Purge 2"), (8, "Purge 3"), (9, "Purge 4"), (10, "Purge 5"), (11, "Un-purge 1"), (12, 'Changed server settings'), ))
 	post = models.ForeignKey(Post, related_name='audit_post', null=True, on_delete=models.CASCADE)
 	comment = models.ForeignKey(Comment, related_name='audit_comment', null=True, on_delete=models.CASCADE)
 	user = models.ForeignKey(User, related_name='audit_user', null=True, on_delete=models.CASCADE)

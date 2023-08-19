@@ -6,6 +6,7 @@ def community_sidebar(community, request):
 	return {
 		'community': community,
 		'can_edit': community.can_edit_community(request),
+		'Community_block': community.Community_block(request),
 		'request': request,
 	}
 @register.inclusion_tag('closedverse_main/elements/community_post.html')

@@ -48,5 +48,3 @@ class ClosedMiddleware(object):
 			response['X-Username'] = request.user.username
 
 		return response
-
-

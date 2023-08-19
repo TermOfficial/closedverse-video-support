@@ -95,6 +95,7 @@ def community_list(request):
 				'image': request.build_absolute_uri(settings.STATIC_URL + 'img/favicon.png'),
 			},
 	})
+
 def community_all(request, category):
 	"""All communities, with pagination"""
 	try:
@@ -224,7 +225,6 @@ def login_page(request):
 						return HttpResponseBadRequest("The password is either encoded in an unsupported format, or the settings haven't been updated yet. Please add - or direct the server owner to add - hashers_passlib.bcrypt_sha256 to settings.PASSWORD_HASHERS, and then install django-hashers-passlib. I'm sorry for the inconvenience! If password resets work, you can use that immediately.")
 				else:
 					return HttpResponse("Invalid password.", status=401)
-			#is or ==?			
 			elif user[1] == 2:
 				return HttpResponse("This account's password needs to be reset. Contact an admin or reset by email.", status=400)
 			elif not user[0].is_active():
@@ -357,11 +357,8 @@ def signup_page(request):
 		if check_signupban:
 			return HttpResponseBadRequest("Get on your hands and knees")
 		if iphub(request.META['REMOTE_ADDR']):
-			spamuser = True
 			if settings.DISALLOW_PROXY:
 				return HttpResponseBadRequest("please do not use a vpn ok thanks")
-		else:
-			spamuser = True
 		if request.POST.get('origin_id'):
 			if not request.POST.get('mh'):
 			  return HttpResponseBadRequest("sorry didn't get the mii image attribute. you might need to wait or just refresh, sorry")
@@ -506,7 +503,7 @@ def user_view(request, username):
 		if len(request.POST.get('email')) > 500:
 			return json_response('Email is too long (length '+str(len(request.POST.get('email')))+', max 500)')
 		# Kinda unneeded but gdsjkgdfsg
-		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region' or request.POST.get('external') == 'Discord Tag':
+		if request.POST.get('website') == 'Web URL' or request.POST.get('country') == 'Region':
 			return json_response("I'm laughing right now.")
 		
 		if len(request.POST.get('avatar')) > 255:
@@ -740,10 +737,7 @@ def user_yeahs(request, username):
 	if not profile.yeahs_visible:
 		raise Http404()
 
-	if request.GET.get('offset'):
-		yeahs = user.get_yeahed(2, 20, int(request.GET['offset']))
-	else:
-		yeahs = user.get_yeahed(2, 20, 0)
+	yeahs = user.get_yeahed(2, 20, int(request.GET.get('offset', 0)))
 	if yeahs.count() > 19:
 		if request.GET.get('offset'):
 			next_offset = int(request.GET['offset']) + 20
@@ -1221,6 +1215,7 @@ def post_view(request, post):
 		post.can_rm = post.can_rm(request)
 		post.is_favorite = post.is_favorite(request.user)
 		post.can_comment = post.can_comment(request)
+		post.can_lock_comments = post.can_lock_comments(request)
 	if post.is_mine:
 		title = 'Your post'
 	else:
@@ -1272,6 +1267,12 @@ def post_change(request, post):
 	return HttpResponse()
 @require_http_methods(['POST'])
 @login_required
+def lock_the_comments(request, post):
+	the_post = get_object_or_404(Post, id=post)
+	the_post.lock_the_comments_up(request)
+	return HttpResponse()
+@require_http_methods(['POST'])
+@login_required
 def post_setprofile(request, post):
 	the_post = get_object_or_404(Post, id=post)
 	the_post.favorite(request.user)
@@ -1319,7 +1320,7 @@ def post_comments(request, post):
 			return json_response({
 			1: "Your comment is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
-			3: "You're making comments too fast, wait a few seconds and try again.",
+			3: "You're making comments too quickly, wait a few seconds and try again.",
 			6: "Not allowed.",
 			12: "Please don't post Zalgo text.",
 			}.get(new_post))
@@ -1672,7 +1673,7 @@ def messages_view(request, username):
 			return json_response({
 			1: "Your message is too long ("+str(len(request.POST['body']))+" characters, 2200 max).",
 			2: "The image you've uploaded is invalid.",
-			3: "Sorry, but you're sending messages too fast.",
+			3: "Sorry, but you're sending messages too quickly.",
 			6: "Not allowed.",
 			}.get(new_post))
 		friendship.update()
@@ -2027,7 +2028,7 @@ def my_data(request):
 	log_attempt = LoginAttempt.objects.filter(user=user).order_by('-id')[:10]
 	history = ProfileHistory.objects.filter(user=user).order_by('-id')[:10]
 	creation_date = user.created.date()
-	datenow = date.today()
+	datenow = timezone.now().date()
 	age = datenow - creation_date
 	return render(request, 'closedverse_main/help/my-data.html', {
 		'user': user,
@@ -2082,6 +2083,7 @@ def change_password_set(request):
 		# do the thing
 		user.set_password(new)
 		user.save()
+		# without this, you will be logged out immediately on your own session
 		update_session_auth_hash(request, user)
 		return json_response("Success! Now you can log in with your new password!")
 	else:
@@ -2089,13 +2091,6 @@ def change_password_set(request):
 	
 def whatads(request):
 	return render(request, 'closedverse_main/help/whatads.html', {'title': 'What are user-generated ads?'})
-"""
-@login_required
-def active_clones(request):
-	return render(request, 'closedverse_main/help/Active_clones.html', {'title': 'Active Clones'})
-def help_approval(request):
-	return render(request, 'closedverse_main/help/help_approval.html', {'title': 'Approval system'})
-"""
 def help_rules(request):
 	return render(request, 'closedverse_main/help/rules.html', {'title': 'Rules', 'age': settings.age_allowed})
 def help_faq(request):
