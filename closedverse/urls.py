@@ -14,11 +14,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path, re_path
-from django.views.static import serve
-
-#from closedverse_main import urls
-from closedverse.settings import STATIC_URL
+from django.urls import include, path#, re_path
+#from django.views.static import serve
 
 # determine static root for admin app
 #admin_root = admin.__file__.replace('__init__.py', 'static/admin')

@@ -3,7 +3,6 @@ import django.db.models.deletion
 
 from django.contrib.sessions.models import Session
 from django.contrib.sessions.backends.db import SessionStore
-from closedverse import settings
 from closedverse_main.models import User, Role
 
 def update_passwords(apps, schema_editor):

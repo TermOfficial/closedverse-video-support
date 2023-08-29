@@ -1,7 +1,6 @@
 from django.http import HttpResponseForbidden
 from closedverse import settings
 from django.shortcuts import redirect
-from django.contrib.auth import logout
 from re import compile
 
 # Taken from https://python-programming.com/recipes/django-require-authentication-pages/
