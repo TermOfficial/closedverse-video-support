@@ -46,6 +46,6 @@ ExecStart=/usr/bin/python3 manage.py runserver IP-HERE:80
 [Install]
 WantedBy=multi-user.target
 ```
-17. Put these commands in. `sudo systemctl daemon-reload` then `sudo systemctl enable django` then `sudo systemctl start django`. Make sure it works by running `sudo systemctl status django`
+17. Put these commands in. `sudo systemctl daemon-reload` then `sudo systemctl enable django` then `sudo systemctl start django`. Make sure it works by running `sudo systemctl status django`.
 # Copyright
 Copyright 2017 Arian Kordi, all rights reserved to their respective owners. (Nintendo, Hatena Co Ltd.)
