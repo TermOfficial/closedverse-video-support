@@ -20,9 +20,9 @@ so its closedverse, but with video mp4 support and all the features from the oth
 1. First, SSH into your server.
 2. Update using `sudo apt update && sudo apt upgrade`
 3. Install pip if you don't have it already. `sudo apt install pip`
-4. Get everything else using pip. `pip3 install Django==3.2.2 urllib3 lxml passlib bcrypt pillow django-markdown-deux django-markdown2 whitenoise django-xff`
-5. Clone it. `git clone https://github.com/TermOfficial/closedverse-video-support`
-6. Go into the directory. `cd closedverse-video-support`
+4. Clone it. `git clone https://github.com/TermOfficial/closedverse-video-support`
+5. Go into the directory. `cd closedverse-video-support`
+6. Run `pip install -r requirements.txt`
 7. Rename `settings-stripped.py` to `settings.py`
 8. Edit the settings. `nano closedverse/settings.py`
 9. Fill out everything. Generate a secret key, and paste it in too.
