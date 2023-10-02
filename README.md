@@ -40,7 +40,7 @@ After=network.target
 
 [Service]
 User=root
-WorkingDirectory=/root/Cedar-Django
+WorkingDirectory=/root/closedverse-video-support
 ExecStart=/usr/bin/python3 manage.py runserver IP-HERE:80
 
 [Install]
