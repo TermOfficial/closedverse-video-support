@@ -1,0 +1,17 @@
+[Unit]
+Description=Gunicorn for Closedverse
+After=network.target
+
+[Service]
+# uncomment and replace with the username who's running the app
+#User=root
+# variable %h means home folder - change this as needed
+WorkingDirectory=%h/closedverse-video-support
+# edit this to be venv's bin directory if needed
+Environment="PATH=%h/closedverse-video-support/closedverse-venv/bin:/usr/bin"
+# define an access log format that shows the username and output it to stdout/systemd-journald
+# view with journalctl -u gunicorn-closedverse
+ExecStart=python3 -m gunicorn closedverse.wsgi --bind 0.0.0.0:8000 --access-logformat '%(h)s %(l)s %({X-Username}o)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"' --access-logfile -
+
+[Install]
+WantedBy=multi-user.target

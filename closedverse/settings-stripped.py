@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     'markdown_deux',
     'closedverse_main',
     #'ban',
@@ -73,7 +73,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+
     #'ban.middleware.BanManagement',
     'closedverse_main.middleware.ClosedMiddleware',
     #'maintenance.middleware.MaintenanceManagement',
@@ -229,8 +229,9 @@ if os.path.isdir(os.path.join(BASE_DIR, '.git')):
 
     # if this command returns a non-zero exit code, then
     # there have been some changes so let's indicate that
-    if os.system('git diff-index --quiet HEAD --'):
-        CLOSEDVERSE_GIT_HAS_CHANGES = True
+    # NOTE: not indicated in closedverse-video-support
+    #if os.system('git diff-index --quiet HEAD --'):
+    #    CLOSEDVERSE_GIT_HAS_CHANGES = True
 
     git_process = os.popen('git remote get-url origin', 'r')
     CLOSEDVERSE_GIT_URL = git_process.read()[:-1]

@@ -31,6 +31,9 @@ static/admin
 # Just in case
 .DS_Store
 
+# venv
+closedverse-venv/*
+closedverse-venv
 
 #My
 closedverse todo
