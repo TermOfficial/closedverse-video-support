@@ -106,7 +106,7 @@
 			{% if user_communities %}<a href="{% url "main:community-viewall" "usr" %}" class="big-button">Show more</a>{% endif %}
 			{% community_page_element my_communities "My Communities" %}
 
-			{% if not feature and not game and not special and not user_communities and not my_communities %}
+			{% if not feature and not general and not game and not special and not user_communities and not my_communities %}
 				<div class="post-list-outline">
 				{% nocontent "There are no communities of any kind yet. You can either create one in the admin panel, or make a user-created community once you sign up." %}
 				</div>
