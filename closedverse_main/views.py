@@ -554,6 +554,15 @@ def user_view(request, username):
 				#profile.origin_id = getmii[2]
 				profile.origin_id = request.POST['origin_id']
 				profile.origin_info = json.dumps([request.POST.get('mh'), 'if you see this then something is wrong', request.POST['origin_id']])
+		elif request.POST.get('avatar') == '3':
+			if not request.POST.get('origin_id'):
+				user.has_mh = False
+				profile.origin_id = None
+				profile.origin_info = None
+				user.avatar =  ('s' if getrandbits(1) else '')
+			else:
+				user.has_mh = True
+				user.avatar = request.POST['studio_code']
 		# set the username color
 		if request.POST.get('color'):
 			try:

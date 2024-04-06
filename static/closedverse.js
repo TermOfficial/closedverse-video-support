@@ -3244,10 +3244,14 @@ mode_post = 0;
 		//b.Net.go(b)
 		}
 		cac = function (){
+			var formData = new FormData(a("form")[0]);
 			$.ajax({
 				type: 'POST',
 				url: window.location.href,
-				data: $('form').serialize(),
+				data: formData,
+				// needed for file uploads
+				processData: false,
+				contentType: false,
 				success: lfinish,
 				error: function(e){
 					$('p.red').text(e.responseText);
@@ -3273,6 +3277,7 @@ mode_post = 0;
 				});
 		});
 			
+		Olv.EntryForm.setupIdentifiedUserForm($(".login-page"), {done:function(){}});
 			// Is there an NNID field? (signup)
 			// TODO: Make this way better and don't have this duplicated like it is now
 			if($('h3.label.nnid').length) {
@@ -3466,21 +3471,35 @@ mode_post = 0;
 				
 				$("input[name=avatar][value=0]").change(function() {
 					$(".setting-avatar > .icon-container > .nnid-icon.mii").removeClass("none");
+					$(".setting-avatar > .icon-container > .nnid-icon.mii-studio").addClass("none");
 					$(".nnid-icon.gravatar").addClass("none");
 					$(".nnid-icon.custom").addClass("none");
 					$("#upload-thing").addClass("none");
+					$("#studio-input").addClass("none");
 				});
 				$("input[name=avatar][value=1]").change(function() {
 					$(".setting-avatar > .icon-container > .nnid-icon.mii").addClass("none");
+					$(".setting-avatar > .icon-container > .nnid-icon.mii-studio").addClass("none");
 					$(".nnid-icon.custom").addClass("none");
 					$(".nnid-icon.gravatar").removeClass("none");
 					$("#upload-thing").addClass("none");
+					$("#studio-input").addClass("none");
 				});
 				$("input[name=avatar][value=2]").change(function() {
 					$(".setting-avatar > .icon-container > .nnid-icon.mii").addClass("none");
+					$(".setting-avatar > .icon-container > .nnid-icon.mii-studio").addClass("none");
 					$(".nnid-icon.gravatar").addClass("none");
 					$(".nnid-icon.custom").removeClass("none");
 					$("#upload-thing").removeClass("none");
+					$("#studio-input").addClass("none");
+				});
+				$("input[name=avatar][value=3]").change(function() {
+					$(".setting-avatar > .icon-container > .nnid-icon.mii").addClass("none");
+					$(".setting-avatar > .icon-container > .nnid-icon.mii-studio").removeClass("none");
+					$(".nnid-icon.gravatar").addClass("none");
+					$(".nnid-icon.custom").addClass("none");
+					$("#upload-thing").addClass("none");
+					$("#studio-input").removeClass("none");
 				});
 				// awkward but it should work
 				Olv.EntryForm.setupIdentifiedUserForm($(".settings-list"), {done:function(){}});
@@ -3528,7 +3547,7 @@ mode_post = 0;
             		$('.color-thing2').spectrum();
                 b.Net.reload();
                 var updateAvatar = function() {
-                  a('#global-menu-mymenu .icon-container .user-icon').attr('src', a('#sidebar-profile-body .icon').attr('src'));
+                  a('#global-menu-mymenu .icon-container img:not(.official-tag)').attr('src', a('#sidebar-profile-body .icon').attr('src'));
                 	var them = a('[name=theme]').val();
 		              if(them === 'None') {
 		              	toDefault();

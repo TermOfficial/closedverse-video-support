@@ -215,14 +215,16 @@
               </li>
               <li class="setting-avatar">
                 <div class="icon-container">
-                    <img class="icon nnid-icon mii{% if not user.has_mh %} none{% endif %}" src="{% miionly user.mh %}">
-					<img class="icon nnid-icon gravatar{% if user.has_mh or user.has_plain_avatar %} none{% endif %}" src="{{ user.gravatar }}">
-					{% if user.has_freedom %}
-					<img class="icon nnid-icon custom{% if not user.has_plain_avatar %} none{% endif %}" src="{{ user.do_avatar }}">
-					{% endif %}
+                    <img class="icon nnid-icon mii{% if not user.has_mh or user.avatar|length == 94 %} none{% endif %}" src="{% miionly user.mh %}">
+                    <img class="icon nnid-icon mii-studio {% if not user.has_mh or user.avatar|length != 94 %} none{% endif %}" src="{% studioonly user.avatar %}">
+                    <img class="icon nnid-icon gravatar{% if user.has_mh or user.has_plain_avatar %} none{% endif %}" src="{{ user.gravatar }}">
+                    {% if user.has_freedom %}
+                    <img class="icon nnid-icon custom{% if not user.has_plain_avatar %} none{% endif %}" src="{{ user.do_avatar }}">
+                    {% endif %}
                   </div>
                 <p class="settings-label">Do you want the avatar shown beside your content to use the Mii from your Nintendo Network ID or a Gravatar or a custom avatar the way God intended?</p>
-                <label><input type="radio" name="avatar" value="0"{% if user.has_mh %} checked{% endif %}>Mii</label>
+                <label><input type="radio" name="avatar" value="0"{% if user.has_mh and user.avatar|length != 94 %} checked{% endif %}>Mii</label>
+                <label><input type="radio" name="avatar" value="3"{% if user.has_mh and user.avatar|length == 94 %} checked{% endif %}>Mii Studio</label>
                 <label><input type="radio" name="avatar" value="1"{% if not user.has_mh %} checked{% endif %}>Gravatar</label>
                 {% if user.has_freedom %}
                 <label><input type="radio" name="avatar" value="2"{% if user.has_plain_avatar%} checked{% endif %}>Custom</label>
@@ -233,6 +235,12 @@
 								{% else %}
 								<input type="hidden" name="avatar" value="2">
 								{% endif %}
+                <div class="settings-label{% if not user.has_mh or user.avatar|length != 94 %} none{% endif %}" id="studio-input">
+                    <div class="center center-input">
+                			<input type="text" name="studio_code" minlength="94" maxlength="94" placeholder="Mii Studio Code/Hash" value="{% if user.avatar|length == 94 %}{{ user.avatar }}{% endif %}">
+                    </div>
+      						    <p class="note">Paste a Mii Studio code in here to use a Mii from Mii Studio. Instructions here (click the question mark): <a href="https://limes.pink/spinmii">https://limes.pink/spinmii</a></p>
+                </div>
                 <p class="note">Selecting the Gravatar option will cause your avatar to be pulled from the <a href="https://gravatar.com">Gravatar account</a> linked to your email address, and feelings won't be shown in your posts unless you choose to use a Mii instead. Same with the custom avatar option but who really cared anyway?</p>
          </li>
 

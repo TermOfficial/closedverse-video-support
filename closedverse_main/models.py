@@ -169,6 +169,9 @@ class Role(models.Model):
 # as of writing, mii-secure is unstable, nintendo please do not f*ck me for this
 mii_domain = 'https://s3.us-east-1.amazonaws.com/mii-images.account.nintendo.net/'
 
+# endpoint for mii studio rendering
+studio_endpoint = 'https://studio.mii.nintendo.com/miis/image.png'
+
 class User(AbstractBaseUser):
 	id = models.AutoField(primary_key=True)
 	username = models.CharField(max_length=32, unique=True)
@@ -334,15 +337,29 @@ class User(AbstractBaseUser):
 			return True
 	def do_avatar(self, feeling=0):
 		if self.has_mh and self.avatar:
-			feeling = {
-			0: 'normal',
-			1: 'happy',
-			2: 'like',
-			3: 'surprised',
-			4: 'frustrated',
-			5: 'puzzled',
-			}.get(feeling, "normal")
-			url = '{2}{0}_{1}_face.png'.format(self.avatar, feeling, mii_domain)
+			# mii studio codes/hashes should always be 94 chars long
+			if len(self.avatar) == 94:
+				# assuming this is a mii studio code
+				feeling = {
+					#0: 'normal',  # this is default so is it really necessary
+					1: 'smile_open_mouth',
+					2: 'like_wink_left',
+					3: 'surprise_open_mouth',
+					4: 'frustrated',
+					5: 'sorrow',
+				}.get(feeling, 'normal')
+				url = '{2}?data={0}&type=face&expression={1}&width=128' \
+					.format(self.avatar, feeling, studio_endpoint)
+			else:
+				feeling = {
+				0: 'normal',
+				1: 'happy',
+				2: 'like',
+				3: 'surprised',
+				4: 'frustrated',
+				5: 'puzzled',
+				}.get(feeling, "normal")
+				url = '{2}{0}_{1}_face.png'.format(self.avatar, feeling, mii_domain)
 			return url
 		elif not self.avatar:
 			return settings.STATIC_URL + 'img/anonymous-mii.png'

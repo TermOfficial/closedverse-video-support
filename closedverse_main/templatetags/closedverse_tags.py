@@ -1,6 +1,6 @@
 from django import template
 from closedverse_main.util import HumanTime
-from closedverse_main.models import mii_domain
+from closedverse_main.models import mii_domain, studio_endpoint
 from closedverse import settings
 
 register = template.Library()
@@ -23,6 +23,12 @@ def color_theme(request):
     else:
         theme = None
     return theme
+@register.simple_tag
+def studioonly(studio_code):
+	if not studio_code or len(studio_code) != 94:
+		return settings.STATIC_URL + 'img/anonymous-mii.png'
+	else:
+		return '{1}?data={0}'.format(studio_code, studio_endpoint)
 @register.simple_tag
 def miionly(mh):
 	if not mh:
