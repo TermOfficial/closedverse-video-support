@@ -114,6 +114,16 @@ def image_upload(img, stream=False, drawing=False, avatar=False):
 	if stream:
 		if not 'image' in img.content_type:
 			return 1
+	if 'gif' in img.content_type and settings.allow_gifs:
+		# save file without preprocessing
+		hash = sha1()
+		hash.update(decodedimg)
+		imhash = hash.hexdigest()
+		floc = imhash + '.gif'
+		if not os.path.exists(settings.MEDIA_ROOT + floc):
+			with open(settings.MEDIA_ROOT + floc, "wb+") as destination:
+				destination.write(decodedimg)
+		return settings.MEDIA_URL + floc
 	# upload svg?
 	#if 'svg' in mime:
 	#	

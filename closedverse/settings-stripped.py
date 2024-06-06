@@ -330,3 +330,6 @@ XFF_HEADER_REQUIRED = True
 
 # uncomment this if you want miis to be retrieved on the server
 #mii_endpoint = '/origin?a='
+
+# if this is false then gifs will not animate when uploaded
+allow_gifs = True
